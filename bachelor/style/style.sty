@@ -1,0 +1,57 @@
+\usepackage[utf8]{inputenc}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{ascmac}
+\usepackage{comment}
+\usepackage{cleveref}
+\usepackage{diagbox}
+\usepackage{latexsym}
+\usepackage{here}
+\usepackage{multicol}
+\usepackage{multirow}
+\usepackage{url}
+\usepackage{subcaption}
+\usepackage[dvipdfmx]{graphicx}
+\usepackage[dvipdfmx]{color}
+\usepackage{here}
+\usepackage{enumitem}
+% \usepackage{autonum}
+
+% 定理証明系の記法を使いたい場合は `1` にすればコメントインされる
+% english 環境では表紙フォントがおかしくなるので要検討
+% ref: https://github.com/hal-lab-u-tokyo/thesis_template/issues/5
+\if 0
+\usepackage{amsthm}
+\usepackage{bm}
+\usepackage{txfonts}
+\usepackage{tikz}
+\usetikzlibrary{intersections,calc,arrows}
+
+\newtheorem{dfn}{定義}
+\crefname{dfn}{定義}{定義}
+\newtheorem{prop}{命題}
+\crefname{prop}{命題}{命題}
+\newtheorem{thm}{定理}
+\crefname{thm}{定理}{定理}
+\newtheorem{lem}[thm]{補題}
+\crefname{lem}{補題}{補題}
+\newtheorem{asm}{仮定}
+\crefname{asm}{仮定}{仮定}
+\newtheorem{cor}{系}
+\crefname{cor}{系}{系}
+\newtheorem{remark}{注意}
+\crefname{remark}{注意}{注意}
+\newtheorem*{proof*}{証明}
+\fi
+
+\newcommand{\crefpairconjunction}{ }
+\crefname{equation}{式}{式}
+\def\qed{\hfill $\Box$}
+
+%\usepackage{natbib}
+\usepackage{graphicx}
+\usepackage{subfiles}
+\providecommand{\main}{.}
+
+\newcommand{\ab}[1]{\left<#1\right>}
+\newcommand{\rb}[1]{\left(#1\right)}
