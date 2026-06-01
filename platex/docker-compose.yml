@@ -1,0 +1,8 @@
+services:
+  platex:
+    build: .
+    volumes:
+      - ../master:/src
+    working_dir: /src
+    network_mode: none
+    entrypoint: ["latexmk", "-pdfdvi"]

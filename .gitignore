@@ -1,3 +1,6 @@
+# Copy of platex/.latexmkrc
+master/.latexmkrc
+
 ## Core latex/pdflatex auxiliary files:
 *.aux
 *.lof
