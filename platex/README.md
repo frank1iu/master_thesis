@@ -29,10 +29,13 @@ docker compose run --rm platex -C
 
 1. Install the LaTeX Workshop extension
 2. Change settings as follows:
-```
-"latex-workshop.docker.enabled": true
-"latex-workshop.docker.image.latex": "<name of your image>"
-"latex-workshop.latex.recipe.default": "latexmk (latexmkrc)"
+```diff
+-   "latex-workshop.docker.enabled": false
++   "latex-workshop.docker.enabled": true
+-   "latex-workshop.docker.image.latex": ""
++   "latex-workshop.docker.image.latex": "<name of your image>"
+-   "latex-workshop.latex.recipe.default": "first"
++   "latex-workshop.latex.recipe.default": "latexmk (latexmkrc)"
 ```
 Then go to `"latex-workshop.latex.tools"`, find `"latexmk_rconly"` and add a line:
 ```diff
