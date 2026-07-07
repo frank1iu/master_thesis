@@ -4,13 +4,17 @@
 
 - Double descent phenomenon leading to massive neural networks.
 
-- Methods of model compression.
+- Need for model compression, then describe methods (quantization, distillation, pruning, weight palettization, etc).
 
-- Pre-training of LLaMa-based 0.5M params small LM
+- Introduce TinyStories
+    - Their oversight: using GPT-Neo tokenizer instead of training one
+    - Results of models reproduced with custom tokenizer
 
 - Quantization. Why it works? Because models aren't using their full capacity (show experiment results here)
 
-- Expose models' sensitivity to perturbations (show loss landscape plots here)
+- Pre-training of LLaMa-based 0.46M params small LM on TinyStories V2
+
+- Expose model's sensitivity to perturbations (show loss landscape plots here)
 
 ### Literature Review
 
