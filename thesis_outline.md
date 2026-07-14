@@ -1,5 +1,11 @@
 ## Thesis outline
 
+Title:
+
+```
+Adaptive Rounding for Efficient Post-Training Quantization of Compact Deep Neural Networks
+```
+
 ### Background
 
 - Double descent phenomenon leading to massive neural networks.
@@ -8,36 +14,35 @@
 
 - Introduce TinyStories
     - Their oversight: using GPT-Neo tokenizer instead of training one
-    - Results of models reproduced with custom tokenizer
+    - **Experiment**: Results of pretrained models with custom tokenizer - better perplexity with half model size
 
-- Quantization. Why it works? Because models aren't using their full capacity (show experiment results here)
+- Quantization. Why it works? Because models aren't using their full capacity
+    - Show computed entropy of weights on Qwen 3, showing that it only uses 2/3 of its capacity
 
-- Pre-training of LLaMa-based 0.46M params small LM on TinyStories V2
-
-- Expose model's sensitivity to perturbations (show loss landscape plots here)
+- **Experiment**: Pre-training of LLaMa-based 0.46M params small LM on TinyStories V2. And loss landscape plots of this small LM to demonstrate models' sensitivity to perturbations
 
 ### Literature Review
 
 - Describe AdaRound
 
-- Show inversion attack here
+- **Experiment**: Inversion results of AdaRound, showing potential privacy risk
+
+- Another limitation: AdaRound assumes zero gradient for converged models, but central flows paper says otherwise.
 
 ### Proposed Method
 
-- Proposed method (TODO: Either first order taylor approximation using EMA or combine both)
+- Proposed method (Post-training on 2% of the data, then steer rounding using the direction from the original model to the post-trained model)
 
 ### Experimentation
 
-- Describe experiment environment and conditions here
+- Experiment environment and conditions.
 
 ### Results
 
-- Results of proposed method vs. AdaRound on our own language model
-
-- Show robustness to inversion
+- **Experiment**: Results of proposed method vs. AdaRound on our own language model, showing decreased perplexity
 
 ### Conclusion & Future Prospects
 
 - AdaRound and proposed method both has compute requirement. 
 
-- Perhaps using some of the compute during training (QAT)?
+- Future work: perhaps using some of the compute during training (QAT)?
