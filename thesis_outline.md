@@ -3,14 +3,14 @@
 Title:
 
 ```
-Adaptive Rounding for Efficient Post-Training Quantization of Compact Deep Neural Networks
+Adaptive Rounding for Efficient Post-Training Quantization of Deep Neural Networks
 ```
 
 ### Background
 
 - Double descent phenomenon leading to massive neural networks.
 
-- Need for model compression, then describe methods (quantization, distillation, pruning, weight palettization, etc).
+- Motivation: Need for model compression, then describe methods (quantization, distillation, pruning, weight palettization, etc).
 
 - Introduce TinyStories
     - Their oversight: using GPT-Neo tokenizer instead of training one
@@ -27,9 +27,11 @@ Adaptive Rounding for Efficient Post-Training Quantization of Compact Deep Neura
 
 - **Experiment**: Inversion results of AdaRound, showing potential privacy risk
 
-- Another limitation: AdaRound assumes zero gradient for converged models, but central flows paper says otherwise.
+- Another limitation: AdaRound assumes zero gradient for converged models, but central flows paper says otherwise. (Introduce Central Flows paper here, then show Kimi K2 training loss curve as empirical evidence on frontier LLMs)
 
 ### Proposed Method
+
+- Purpose: investigate the inconsistency between the two papers (AdaRound and Central Flows). 
 
 - Proposed method (Post-training on 2% of the data, then steer rounding using the direction from the original model to the post-trained model)
 
@@ -46,3 +48,10 @@ Adaptive Rounding for Efficient Post-Training Quantization of Compact Deep Neura
 - AdaRound and proposed method both has compute requirement. 
 
 - Future work: perhaps using some of the compute during training (QAT)?
+
+## Notes
+
+Important for master thesis: 
+- Purpose of research 
+- Good explanation of proposed method
+- Analysis of results. If it doesn't work well, why it doesn’t work so well.
