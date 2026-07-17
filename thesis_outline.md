@@ -35,13 +35,21 @@ Adaptive Rounding for Efficient Post-Training Quantization of Deep Neural Networ
 
 - Proposed method (Post-training on 2% of the data, then steer rounding using the direction from the original model to the post-trained model)
 
-### Experimentation
+  - TODO: vary amount of post training data. does it depend on the dataset? maybe even very few calibration samples would work too?
+
+### Experiments
+
+#### Setup
 
 - Experiment environment and conditions.
 
-### Results
+#### Results
 
 - **Experiment**: Results of proposed method vs. AdaRound on our own language model, showing decreased perplexity
+
+#### Discussion
+
+- Analysis of results. For methods that didn't work: why it doesn’t work so well.
 
 ### Conclusion & Future Prospects
 
@@ -55,3 +63,8 @@ Important for master thesis:
 - Purpose of research 
 - Good explanation of proposed method
 - Analysis of results. If it doesn't work well, why it doesn’t work so well.
+
+Length requirement: 30 is minimum but 40-50 is optimal
+
+
+TODO: Direction for EMA of last few iterations might have reversed direction

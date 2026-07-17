@@ -1,5 +1,5 @@
 % 英語執筆の場合はオプションに `english` を追加
-\documentclass[system, master]{systemM}
+\documentclass[system, master, english]{systemM}
 
 \providecommand{\main}{.}
 
@@ -7,12 +7,12 @@
 \usepackage{subfiles}
 \allowdisplaybreaks
 
-\title{タイトル}
-\author{著者名}
-\eauthor{著者名の英語つづり}% Copyright 表示で使われる
-\studentid{学生証番号}
-\supervisor{指導教員名 役職}% 1 つ引数をとる (役職まで含めて書く)
-\handin{2016}{1}% 提出月. 2 つ (年, 月) 引数をとる
+\title{Adaptive Rounding for Efficient Post-Training Quantization of Deep Neural Networks}
+\author{Piye Liu}
+\eauthor{Piye Liu}% Copyright 表示で使われる
+\studentid{48246347}
+\supervisor{Prof. Hiroshi Nakamura}% 1 つ引数をとる (役職まで含めて書く)
+\handin{2026}{8}% 提出月. 2 つ (年, 月) 引数をとる
 \date{\today}
 
 
@@ -20,7 +20,7 @@
 \maketitle
 
 \frontmatter
-\etitle{Title in English}
+\etitle{}
 \subfile{\main/text/abstract}
 
 
@@ -34,13 +34,20 @@
 
 
 \mainmatter
-\subfile{\main/text/chapter1}
-\subfile{\main/text/chapter2}
+\subfile{\main/text/introduction}
+\subfile{\main/text/background}
+\subfile{\main/text/literature_review}
+\subfile{\main/text/proposed_method}
+\subfile{\main/text/evaluation}
+\subfile{\main/text/conclusion}
 
 \backmatter
-\subfile{\main/text/acknowlegdements}
+%\subfile{\main/text/acknowledgements}
 
 \bibliography{reference}
 \bibliographystyle{junsrt} % 参考文献出力スタイル
+
+\appendix
+\subfile{\main/text/appendix}
 
 \end{document}

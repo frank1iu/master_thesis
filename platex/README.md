@@ -37,13 +37,16 @@ docker compose run --rm platex -C
 -   "latex-workshop.latex.recipe.default": "first"
 +   "latex-workshop.latex.recipe.default": "latexmk (latexmkrc)"
 ```
-Then go to `"latex-workshop.latex.tools"`, find `"latexmk_rconly"` and add a line:
+Then go to `"latex-workshop.latex.tools"`, find `"latexmk_rconly"` and add these options:
 ```diff
     {
         "name": "latexmk_rconly",
         "command": "latexmk",
         "args": [
 +           "-pdfdvi",
++           "-interaction=nonstopmode",
++           "-halt-on-error",
++           "-file-line-error",
             "%DOC%"
         ],
         "env": {}
@@ -52,3 +55,11 @@ Then go to `"latex-workshop.latex.tools"`, find `"latexmk_rconly"` and add a lin
 3. Go to the LaTeX sidebar on the right and find the "View LaTeX PDF" menu. Click "View in VSCode tab".
 
 Note: `synctex` seems to be somewhat working - you can Ctrl+Click (or Cmd+Click on MacOS) the text to go to the corresponding location in the source files.
+
+### LaTeX workshop workaround for subfiles
+
+Add this line to the start of all subfiles (chapter1.tex, chapter2.tex, etc.) to tell LaTeX workshop where to find the root file:
+
+```
+% !TEX root = ../main.tex
+```
