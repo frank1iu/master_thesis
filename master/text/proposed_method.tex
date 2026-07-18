@@ -4,5 +4,42 @@
 
 \begin{document}
 \chapter{Proposed Method}
+\section{Proposed Method}
+To reconcile AdaRound's assumption that the gradient term in \ref{(todo)} can be ignored, and Central Flows' evidence that the gradient is nonzero even for pretrained converged models, we propose a modified version of AdaRound to incorporate awareness of the local gradient.
+
+In order to minimize,
+\begin{align}
+    \mathbb{E} \left[ g^{(w)^T} \Delta W \right],
+\end{align}
+we can attempt to force $\Delta W$ to have the same sign as $-g^{(w)^T}$. We approximate this by finetuning a model on a small amount of training data, and compute the Exponential Moving Average (EMA) of the model during each iteration. We then use $\text{sign}(W'_{\text{avg}} - W)$, the sign of the difference between the weights before and after finetuning, as a proxy to $-\text{sign}\left(g^{(w)^T}\right)$. Finally, we add the Binary Cross Entropy between the current rounding directions and $\text{sign}(W'_{\text{avg}} - W)$ as a penalty term to AdaRound's optimization objective.
+
+\begin{algorithm}[H]
+\caption{Proposed Method (Finetuning)}\label{alg:proposed_finetuning}
+\begin{algorithmic}[1]
+\Require $W$, $X$ (calibration data), $\eta$ (learning rate), $B$ (batch size)
+\Ensure Finetuned model $W'$, EMA of models during finetuning $W'_{\text{avg}}$
+\State $W' \gets W$
+\State $W'_{\text{avg}} \gets W$
+\State $N \gets \frac{X}{B}$ \Comment{Number of Iterations}
+\State $\alpha \gets \frac{2}{N+1}$ \Comment{EMA Smoothing Factor}
+\For{each batch $x_b$ in $X$}
+    \State $\hat{x}_b \gets W'(x_b)$ \Comment{Forward pass}
+    \State $\mathcal{L} \gets \text{CrossEntropyLoss}(\hat{x}_b, x_b)$
+    \State $W' \gets W' - \eta \cdot \nabla \mathcal{L}$ \Comment{Backward pass}
+    \State $W'_{\text{avg}} \gets \alpha \cdot W'_{\text{avg}} + (1 - \alpha) \cdot W'$
+\EndFor
+\State \Return $W'$, $W'_{\text{avg}}$
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{Proposed Method (Calibration)}\label{alg:calibration}
+\begin{algorithmic}[1]
+\Require $W$, $W'_{\text{avg}}$, $X$ (calibration data), $\eta$ (learning rate), $t$ (number of iterations)
+\Ensure Quantized model $W_Q$
+TODO
+\State \Return $W_Q$
+\end{algorithmic}
+\end{algorithm}
 
 \end{document}

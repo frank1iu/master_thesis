@@ -5,6 +5,10 @@
 
 \usepackage{\main/style/style}
 \usepackage{subfiles}
+%%% --- added packages here ---
+\let\Return\relax % undefines \Return - it seems to be used by pLaTeX as a builtin, but I need it for return statements in algorithms
+\usepackage{algorithm, algpseudocode}
+%%% ---------------------------
 \allowdisplaybreaks
 
 \title{Adaptive Rounding for Efficient Post-Training Quantization of Deep Neural Networks}
@@ -34,6 +38,7 @@
 
 
 \mainmatter
+
 \subfile{\main/text/introduction}
 \subfile{\main/text/background}
 \subfile{\main/text/literature_review}
