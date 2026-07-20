@@ -6,66 +6,115 @@
 \chapter{Preliminary}
 
 \section{Compressibility of Deep Neural Networks}
-
-\todo{Source coding theorem + MLE estimation of Qwen3's entropy here}
-
-\section{Baseline Round-to-Nearest Quantization} \label{sec:rtn}
-
-The baseline for post-training quantization is symmetric uniform quantization using round-to-nearest (RTN) rounding. \cite{nagelWhitePaperNeural2021b}
-
-\begin{algorithm}[H]
-\caption{Baseline RTN Quantization}\label{alg:rtn_quant}
-\begin{algorithmic}[1]
-\Require $W$ (unquantized weights), $b$ (target bit width)
-\Ensure Quantized model $W_q$
-\State $q_{\text{min}} \gets -2^{b - 1}$
-\State $q_{\text{max}} \gets 2^{b - 1} - 1$
-\State $\text{scale} \gets \frac{\max(W)}{q_{\text{max}}}$
-\State $W_q \gets \text{clamp}\left(\lceil \frac{W}{\text{scale}} \rfloor, q_\text{min}, q_\text{max}\right)$
-\State \Return $W_q$, scale
-\end{algorithmic}
-\end{algorithm}
-
-\begin{algorithm}[H]
-\caption{Baseline RTN Dequantization}\label{alg:rtn_dequant}
-\begin{algorithmic}[1]
-\Require $W_q$ (quantized weights), scale
-\Ensure Dequantized weights $\hat{W}$
-\State $\hat{W} \gets W_q \cdot \text{scale}$
-\State \Return $\hat{W}$
-\end{algorithmic}
-\end{algorithm}
-
-\section{Quantization is Weight Perturbation} \label{sec:quant_is_perturb}
-
-Let us establish the observation that quantization results in a perturbed model, using an example. Consider a model $\theta$ with parameters $W = \begin{bmatrix}
-1.11 \\ 2.22 \\ 3.33
-\end{bmatrix}$. By applying the baseline round-to-nearest quantization from Section \ref{sec:rtn}, we obtain the following quantized model.
+In this section, we describe a simple way to quantify the compressibility of models. The source coding theorem~\cite{shannonInformationTheory} states that:
+\begin{itemize}
+    \item $n$ i.i.d. (independent and identically distributed) random variables, each with entropy $H(X)$, can be compressed to $nH(X)$ bits on average, with negligible information loss, as $n \rightarrow \infty$ 
+    \item Conversely, if they are compressed to fewer bits on average, loss of information must occur.
+\end{itemize}
+In this case, $H(X)$, the entropy of a random variable, is the expected amount of information needed to describe it, and can be computed by the following.
 \begin{align}
-    \text{scale} \approx 0.0262, W_{q} = \begin{bmatrix}
-\texttt{0b00101010}\\ \texttt{0b01010101} \\ \texttt{0b01111111}
-\end{bmatrix} = \begin{bmatrix}
-42 \\ 85 \\ 127
-\end{bmatrix}
+H(X)&:=-\sum_{x\in X}p(x)\log_2 p(x)
 \end{align}
-After dequantization, we obtain the following model.
+Note that the log base determines the units: $\log_2$ yields bits, $\log_{10}$ yields dits, and $\ln$ yields nats.
+
+Consider a model with weights $W$, each stored in $b$ bits, and there are $n$ weights in total. The total number of bits occupied by the model is therefore $n\cdot b$. This is the capacity of the model: it is the maximum amount of information the weights could carry if every possible bit pattern were equally likely and the weights were statistically independent. 
+
+In practice, however, models rarely use their full capacity. We can measure this by treating its weights as independent draws from a categorical distribution over these possible values.
 \begin{align}
-W_{\text{reconstructed}} = \text{scale} \cdot W_{\text{quantized}} \approx \begin{bmatrix}
-1.1013 \\ 2.2287 \\ 3.33
-\end{bmatrix}
+    \mathcal{X} = \{0, 1, \dots, 2^b-1\}
 \end{align}
-We can see that the model is perturbed by the following.
+
+We can use Maximum Likelihood Estimation (MLE) to estimate the distribution as follows.
 \begin{align}
-    \Delta W = \begin{bmatrix}
-1.1013 \\ 2.2287 \\ 3.33
-\end{bmatrix} - \begin{bmatrix}
-1.11 \\ 2.22 \\ 3.33
-\end{bmatrix}
-=\begin{bmatrix}
--0.0087 \\ 0.0087 \\ 0 \end{bmatrix}
+    \hat{p}(x) &= \frac1n \sum^n_{k=1} \mathbf{1} (W_k=x) 
+\text{, where } \mathbf{1}(p)=\begin{cases}
+1 & \text{if }p\\
+0 & \text{if }\neg p
+\end{cases}
 \end{align}
-It is important to note the direction of perturbation. In this case, our model moved in the direction of $\big[\begin{smallmatrix}
--1 \\ 1 \\ 0 \end{smallmatrix}\big]$.
+And we can estimate the entropy per weight as follows.
+\begin{align}
+    \hat{H}(W)&:=-\sum_{x\in \mathcal{X}}\hat{p}(x)\log_2 \hat{p}(x)
+\end{align}
+
+Note that if a certain value does not appear at all in the model weights, there will be an undefined term $0\ln 0$ in the above calculation. We use a convention in modern information theory to mitigate this, by using an extension of $x\ln x$ in the form of the following~\cite[eq. 1.1.2]{ebanks1998characterizations}.
+\begin{align} \label{eq:math_hack}
+    f(x) &= \begin{cases}
+        0, & x = 0 \\
+        x\ln x, & x > 0
+    \end{cases}
+\end{align}
+This allows us to treat $0\ln 0$ as $0$. We can see that the total information stored in the weights would be approximately $n \cdot \hat{H}(W)$ bits. But the maximum possible total entropy of the model is $n\cdot b$ bits (achieved by the uniform distribution), it therefore follows that the capacity utilization by a model is the following.
+\begin{align}
+U(W) &:= \frac{\hat{H}(W)}{b}
+\end{align}
+
+Note that $U \in [0, 1]$, and $U = 1$ implies the model is nearly incompressible losslessly, while $U < 1$ implies the model can be losslessly compressed to $1 - U$ times its current size. For example, if $U = 0.5$, the model can be compressed to half its size with neglibile information loss.
+
+Qwen 3~\cite{yangQwen3TechnicalReport2025b} is a state-of-the-art language model in various sizes. Now that we have a method to quantify the compressibility of models, let us evaluate the compressibility of the 4B model, which is provided in three data types, of widths 16, 8, and 4. We report the results in Table \ref{tab:qwen3_entropy}.
+\todo{Consider reproducing with more models}
+
+\begin{table}[H]
+\centering
+\caption{Entropy Estimate of Qwen 3 4B Weights}
+\label{tab:qwen3_entropy}
+\begin{tabular}{|c|c|c|}
+ \hline
+    Data Type & $\hat{H}(W)$ in bits & $U(W)$ \\ \hline
+    bfloat16 & 10.58 & $10.58/16\approx66\%$ \\ \hline
+    fp8 & 6.63 &  $6.63/8\approx82.9\%$ \\ \hline
+    int4 & 3.67 & $3.67/4\approx91.8\%$ \\ \hline
+\end{tabular}
+\end{table}
+
+We observe that the bfloat16 model, which is $\sim8$ GB on disk, only uses $\sim\frac23$ of its capacity. This implies that the model can be compressed to $\sim5.33$ GB with negligible information loss. This degree of compressibility motivates us to perform an investigation of the distribution of the weights by plotting their possible values against the probabilities of each value, which we report in Figures \ref{fig:qwen3_4b_bf16}, \ref{fig:qwen3_4b_fp8}, and \ref{fig:qwen3_4b_int4}.
+
+\todo{No axis labels (need to rerun the code to add them)}
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/weight_distributions/qwen3_4b/bf16_exponent.png}
+        \caption{Exponents}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/weight_distributions/qwen3_4b/bf16_mantissa.png}
+        \caption{Mantissas}
+    \end{subfigure}
+    \caption{Distribution of Qwen3-4B Weights (bfloat16)}
+    \label{fig:qwen3_4b_bf16}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/weight_distributions/qwen3_4b/fp8_exponent.png}
+        \caption{Exponents}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/weight_distributions/qwen3_4b/fp8_mantissa.png}
+        \caption{Mantissas}
+    \end{subfigure}
+    \caption{Distribution of Qwen3-4B Weights (fp8)}
+    \label{fig:qwen3_4b_fp8}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\textwidth]{img/weight_distributions/qwen3_4b/int4.png}
+\caption{Distribution of Qwen3-4B Weights (int4)}
+\label{fig:qwen3_4b_int4}
+\end{figure}
+
+We notice that the full dynamic range of bfloat16 is actually not used. Especially in bfloat16, the exponents are clustered towards the center, with an average of 120 (this means most weights are $m \cdot 2^{-7}$). Several factors may contribute to this phenomenon: weight decay, regularization, and the optimizer (for example, stochastic gradient descent provides implicit optimization~\cite{smithOriginImplicitRegularization2021a}).
+
+We therefore conclude that large language models often have much room for compression, and is not using all of its potential capacity. This provides motivation for research in compression methods.
 
 \section{Small Language Models} \label{sec:slms}
 
@@ -129,6 +178,65 @@ Perplexity (TinyStories v2) & \multicolumn{1}{c|}{---}              & ---       
 We observe that our model results in better perplexity than the reference model despite being much smaller. In \verb|float32|, each weight is 4 bytes, so our model is expected to take only $\sim2.17$MiB of disk space (the actual disk space, including the model's configuration, is $\sim2.22$MiB). Models of this scale can be suitable for devices with extremely low compute and/or memory.
 
 We will use our models as a base to conduct several more experiments.
+\todo{Consider an ablation study to train the same GPT-Neo model, with only a different tokenizer}
+
+\section{Baseline Round-to-Nearest Quantization} \label{sec:rtn}
+
+The baseline for post-training quantization is symmetric uniform quantization using round-to-nearest (RTN) rounding. \cite{nagelWhitePaperNeural2021b}
+
+\begin{algorithm}[H]
+\caption{Baseline RTN Quantization}\label{alg:rtn_quant}
+\begin{algorithmic}[1]
+\Require $W$ (unquantized weights), $b$ (target bit width)
+\Ensure Quantized model $W_q$
+\State $q_{\text{min}} \gets -2^{b - 1}$
+\State $q_{\text{max}} \gets 2^{b - 1} - 1$
+\State $\text{scale} \gets \frac{\max(W)}{q_{\text{max}}}$
+\State $W_q \gets \text{clamp}\left(\lceil \frac{W}{\text{scale}} \rfloor, q_\text{min}, q_\text{max}\right)$
+\State \Return $W_q$, scale
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{Baseline RTN Dequantization}\label{alg:rtn_dequant}
+\begin{algorithmic}[1]
+\Require $W_q$ (quantized weights), scale
+\Ensure Dequantized weights $\hat{W}$
+\State $\hat{W} \gets W_q \cdot \text{scale}$
+\State \Return $\hat{W}$
+\end{algorithmic}
+\end{algorithm}
+
+\section{Quantization is Weight Perturbation} \label{sec:quant_is_perturb}
+
+Let us establish the observation that quantization results in a perturbed model, using an example. Consider a model $\theta$ with parameters $W = \begin{bmatrix}
+1.11 \\ 2.22 \\ 3.33
+\end{bmatrix}$. By applying the baseline round-to-nearest quantization from Section \ref{sec:rtn}, we obtain the following quantized model.
+\begin{align}
+    \text{scale} \approx 0.0262, W_{q} = \begin{bmatrix}
+\texttt{0b00101010}\\ \texttt{0b01010101} \\ \texttt{0b01111111}
+\end{bmatrix} = \begin{bmatrix}
+42 \\ 85 \\ 127
+\end{bmatrix}
+\end{align}
+After dequantization, we obtain the following model.
+\begin{align}
+W_{\text{reconstructed}} = \text{scale} \cdot W_{\text{quantized}} \approx \begin{bmatrix}
+1.1013 \\ 2.2287 \\ 3.33
+\end{bmatrix}
+\end{align}
+We can see that the model is perturbed by the following.
+\begin{align}
+    \Delta W = \begin{bmatrix}
+1.1013 \\ 2.2287 \\ 3.33
+\end{bmatrix} - \begin{bmatrix}
+1.11 \\ 2.22 \\ 3.33
+\end{bmatrix}
+=\begin{bmatrix}
+-0.0087 \\ 0.0087 \\ 0 \end{bmatrix}
+\end{align}
+It is important to note the direction of perturbation. In this case, our model moved in the direction of $\big[\begin{smallmatrix}
+-1 \\ 1 \\ 0 \end{smallmatrix}\big]$.
 
 \section{Effects of Perturbation of Model Weights}
 
@@ -163,16 +271,15 @@ D_{KL}(P \parallel Q)
 + \underbrace{0 \cdot \ln\frac{0}{0.10}}_{\text{``Cat''}}
 + \underbrace{0 \cdot \ln\frac{0}{0.02}}_{\text{``Rain''}},
 \end{align}
-which contains three undefined terms in the form of $0\cdot\ln(\frac{0}{n})$. Modern information theory mitigates this by using an extension of $x\ln x$ in the form of the following~\cite[eq. 1.1.2]{ebanks1998characterizations}.
-\begin{align}
-    f(x) &= \begin{cases}
-        0, & x = 0 \\
-        x\ln x, & x > 0
-    \end{cases}
-\end{align}
+which contains three undefined terms in the form of $0\cdot\ln(\frac{0}{n})$. 
 % perhaps just 0\cdot \ln \frac0n = 0\ln 0
 % but can I do \ln \frac0n = \ln 0?? idk
-Using this method we can compute the undefined terms using $0\cdot \ln \frac{0}{n} = \underbrace{0\ln 0}_{f(0)=0} - 0\ln n = 0$. We then obtain the following.
+Using the convention from Equation \ref{eq:math_hack}, we can compute the undefined terms as follows.
+\begin{align}
+0\cdot \ln \frac{0}{n} = \underbrace{0\ln 0}_{0\text{ by convention}} - 0\ln n = 0
+\end{align}
+
+We then obtain the following.
 \begin{align}
 D_{KL}(P \parallel Q) &= -\ln(0.81) \approx 0.21
 \end{align}
