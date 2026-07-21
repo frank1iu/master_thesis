@@ -4,5 +4,125 @@
 
 \begin{document}
 \chapter{Literature Review}
+\section{AdaRound}
+\subsection{Notation}
+Let us establish the notation for variables in Table \ref{tab:adaround_notation}.
+
+\begin{table}[H]
+\centering
+\caption{Notation for this Literature Review}
+\label{tab:adaround_notation}
+\begin{tabular}{ll}
+\hline
+\textbf{Symbol} & \textbf{Description} \\ \hline
+$w_j$             & Weights of a layer $j$ \\
+$x_j$             & Input to a layer $j$ \\
+$b$             & Target bit-width quantization \\
+$\text{scale}$  & Continuous scaling factor \\
+$\lfloor \cdot \rceil$ & Round-to-nearest-integer operator \\
+$\lfloor \cdot \rfloor$ & Floor operator \\
+%$\mathbf{V}$  & Matrix of learned AdaRound parameter \\
+$\mathbf{W}, \hat{\mathbf{W}}$    & Matrices of unquantized and quantized weights \\
+$\mathcal{L}$ & A loss function \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Introduction to AdaRound}
+AdaRound~\cite{nagelAdaptiveRoundingPostTraining2020a} is a novel rounding method, based on the key insight that round-to-nearest is suboptimal for post-training quantization (PTQ).
+
+The authors' proposed method is to instead minimize the difference in task loss of the quantized model and the unquantized model. The task loss of layer $j$ of the unquantized model is $\mathcal{L}(x, y, w_j)$, and the task loss of the same layer of the quantized model $\mathcal{L}(x, y, w_j + \Delta w_j)$. Therefore, the author's objective is the following.
+
+\begin{align}
+\underset{\Delta w_j}{\arg\min} \left(\mathcal{L}(x, y, w_j + \Delta w_j) - \mathcal{L}(x, y, w_j)\right)
+\end{align}
+
+The author use a second order Taylor expansion to approximate the above objective.
+
+\begin{align}
+\mathcal{L}(x, y, w_j + \Delta w_j) - \mathcal{L}(x, y, w_j) \approx \nabla\mathcal{L}(x, y, w_j)^T \Delta w_j + \frac{1}{2} \Delta w_j^T \mathbf{H} \Delta w_j
+\end{align}
+
+Where $\mathbf{H}$ is the Hessian $\nabla^2\mathcal{L}(x, y, w_j)$. The authors then ignore the first term by asserting that the gradient $\nabla\mathcal{L}(x, y, w_j)$ is $0$ for converged pretrained models, which simplifies into the following.
+
+\begin{align}
+\mathcal{L}(x, y, w_j + \Delta w_j) - \mathcal{L}(x, y, w_j) \approx \frac{1}{2} \Delta w_j^T \mathbf{H} \Delta w_j
+\end{align}
+
+Finally, the author formulates the optimization of weigh rounding for layer $j$ as the following Quadratic Unconstrained Binary Optimization (QUBO) problem.
+
+\begin{align}
+\underset{\Delta w_j}{\arg\min} \Delta w_j^T \mathbf{H} \Delta w_j
+\end{align}
+
+The above problem is NP-hard. To solve this efficiently, AdaRound uses the local mean squared error alongside a regularizer as a proxy. The regularizer encourages the optimization variables to converge towards either $0$ or $1$.
+
+\todo{Derivation}
+
+\begin{align}
+\arg\min_{\mathbf{V}} \|\mathbf{W}x - \hat{\mathbf{W}}x\|_F^2 + f_\text{reg}(\mathbf{V})
+\end{align}
+
+The regularizer uses an annealed parameter $\beta$ and is defined as follows.
+
+\begin{align}
+f_{\text{reg}}(\mathbf{V}) = \sum_{i, j} 1 - \lvert 2h(\mathbf{V}_{i,j}) - 1\rvert^\beta
+\end{align}
+
+The above objective is then optimized over
+
+\begin{align}
+\hat{\mathbf{W}} &= \text{scale} \cdot \text{clamp} \left( \lfloor \frac{\mathbf{W}}{\text{scale}} \rfloor +h(\mathbf{V}), q_\text{min}, q_\text{max}\right), \\ 
+q_\text{min} &= -2^{b-1}, \\
+q_\text{max} &= 2^{b-1}-1.
+\end{align}
+
+The authors define $h$ as a rectified sigmoid as follows, although it can be any differentiable function with a range of $h(\mathbf{V}_{i,j}) \in [0, 1]$.
+
+\begin{align}
+h(\mathbf{V}_{i,j}) &= \text{clamp}\left( \sigma(\mathbf{V}_{i, j}) (\zeta - \gamma) + \gamma, 0, 1\right), \\
+\zeta &= 1.1, \\
+\gamma &= -0.1.
+\end{align}
+
+The use of a rectified sigmoid is justified as it has non-vanishing gradients near $0$ and $1$, and helps the learning process as they previously used a regularizer to encourage $h(\mathbf{V}_{i, j})$ to move to either $0$ or $1$.
+
+\subsection{AdaRound Algorithm}
+We implement AdaRound in Algorithm \ref{alg:adaround}.
+
+\begin{algorithm}[H]
+\caption{AdaRound}\label{alg:adaround}
+\begin{algorithmic}[1]
+\Require $\mathbf{W}$, $X$ (calibration data), $t$ (number of iterations), $b$ (target bit width), $\beta$ (regularization parameter)
+\Ensure Quantized model $\mathbf{W}_q$, scales
+
+\State $x_{in} \gets \textsc{CacheActivations}(\mathbf{W}, X)$ \Comment{Forward pass on calibration data to cache input activations}
+\For{$w_j$ in $\mathbf{W}$}
+\State $q_{\text{min}} \gets -2^{b - 1}$
+\State $q_{\text{max}} \gets 2^{b - 1} - 1$
+\State $\text{scales}_j \gets \frac{\max(w_j)}{q_{\text{max}}}$ \Comment{Store scale for output}
+\State $\mathbf{V}_j \gets h^{-1}(w_j - \lfloor w_j \rfloor)$ \Comment{Initialize $\mathbf{V}_j$ so that it corresponds to the fraction of each weight}
+
+\For{$i \in \{0 \ldots t\}$}
+\State $\beta \gets \textsc{Anneal}(\beta)$
+\State $\hat{w}_j \gets \text{clamp}\left(\lfloor \frac{w_j}{\text{scales}_j} \rfloor + h(\mathbf{V}_j), q_\text{min}, q_\text{max}\right)$
+\State $\mathcal{L} \gets \|w_j x_{in} - \hat{w}_j x_{in}\|_F^2 + \sum_{i, j} \left(1 - \lvert 2h(\mathbf{V}_{i,j}) - 1\rvert^\beta\right)$
+\State $\mathbf{V} \gets \mathbf{V} - \nabla \mathcal{L}$ \Comment{via autograd}
+\EndFor
+\State $\mathbf{W}_{Q_{i, j}} \gets \begin{cases}
+    \lceil w_{i, j} \rceil, &\text{where } h(\mathbf{V}_{i,j}) \geq 0.5 \\
+    \lfloor w_{i, j} \rfloor, &\text{otherwise}
+\end{cases}$ \Comment{Finalize quantization}
+\EndFor
+\State \Return $\mathbf{W}_Q$, scales
+
+
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Empirical Results}
+\todo{Report AdaRound results}
+
+\section{Inversion Method}
 
 \end{document}

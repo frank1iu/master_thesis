@@ -182,7 +182,7 @@ We will use our models as a base to conduct several more experiments.
 
 \section{Baseline Round-to-Nearest Quantization} \label{sec:rtn}
 
-The baseline for post-training quantization is symmetric uniform quantization using round-to-nearest (RTN) rounding. \cite{nagelWhitePaperNeural2021b}
+The baseline for post-training quantization is symmetric uniform quantization using round-to-nearest (RTN) rounding~\cite{nagelWhitePaperNeural2021b}. A model can be quantized to $b$ bits using Algorithm \ref{alg:rtn_quant}, then dequantized using Algorithm \ref{alg:rtn_dequant}.
 
 \begin{algorithm}[H]
 \caption{Baseline RTN Quantization}\label{alg:rtn_quant}
@@ -249,7 +249,7 @@ To understand our model's loss landscape, we must first understand its loss func
 \end{align}
 The KL-divergence measures how an approximating distribution Q is different from a distribution P. We use one-hot encoding to encode the ground truth into the distribution P, and use the model's outputs as the approximating distribution Q. 
 
-Let us show this with an example: if we are predicting a word ``Hello'', the ground truth $P$ distribution and the predicted $Q$ distribution might be:
+Note that we once again need to employ the convention in Equation \ref{eq:math_hack}. Let us show why with an example: if we are predicting a word ``Hello'', the ground truth $P$ distribution and the predicted $Q$ distribution might be:
 \begin{table}[H]
 \centering
 \caption{Example of KL-divergence}
@@ -297,7 +297,7 @@ The cross entropy for a language model $\theta$ on a single token, where $P_i$ i
 \end{align}
 The loss function, the average cross-entropy per token over a sequence of length N, is the following.
 \begin{align}
-    \mathcal{L}(\theta) = \frac1N \sum{i=1}^N H(P_i, Q_i) = -\frac1N \sum_{i=1}^N \ln p_\theta (x_i \mid x_{<i})
+    \mathcal{L}(\theta) = \frac1N \sum_{i=1}^N H(P_i, Q_i) = -\frac1N \sum_{i=1}^N \ln p_\theta (x_i \mid x_{<i})
 \end{align}
 
 Note that this is exactly the natural logarithm of the perplexity of the model on the given text. Given this loss function, we will proceed to investigate the loss landscape of our model.
@@ -325,7 +325,7 @@ Next, we sample models stochastically from the following distribution. We sample
     \theta' \sim \mathcal{N}(\theta, \sigma^2\mathbf{I}), \sigma^2\in\{0.0005\dots0.0040\}
 \end{align}
 
-Note that we cap the perplexity at 100 in Figure \ref{loss_stochastic_capped} for better visualization, because some perplexities are extremely large.
+Note that we cap the perplexity at 100 in Figure \ref{fig:loss_stochastic_capped} for better visualization, because some perplexities are extremely large.
 
 \begin{figure}[H]
     \centering
