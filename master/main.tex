@@ -12,6 +12,8 @@
 \usepackage{todonotes}
 % \usepackage[disable]{todonotes} % <- this hides todo notes
 \usepackage{subcaption}
+\usepackage{setspace}
+\onehalfspacing % a bit more readable. options are \singlespacing, \onehalfspacing, \doublespacing
 %%% ---------------------------
 \allowdisplaybreaks
 
@@ -52,11 +54,12 @@
 
 \backmatter
 %\subfile{\main/text/acknowledgements}
+\singlespacing
 
 \bibliography{reference}
 \bibliographystyle{junsrt} % 参考文献出力スタイル
 
-\appendix
-\subfile{\main/text/appendix}
+%\appendix
+%\subfile{\main/text/appendix}
 
 \end{document}
