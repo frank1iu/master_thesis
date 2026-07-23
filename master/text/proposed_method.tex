@@ -4,42 +4,118 @@
 
 \begin{document}
 \chapter{Proposed Method}
-\section{AdaRound with Gradient Awareness}
-To reconcile AdaRound's assumption that the gradient term in \ref{(todo)} can be ignored, and Central Flows' evidence that the gradient is nonzero even for pretrained converged models, we propose a modified version of AdaRound to incorporate awareness of the local gradient.
+In this chapter, we describe our two contributions: an inversion method to reconstruct representations of training data in AdaRound, and a proposed gradient-aware adaptive rounding method.
+
+\section{AdaRound Inversion Method}
+\todo{Notify in slack when chapter 4 is done}
+In this section, we will report our novel inversion method (also previously published as \cite{liuAdaRoundInversion}) to reconstruct representations of the calibration data used by AdaRound, given access to a model before and after AdaRound quantization.
+
+\subsection{Formulation of Leakage Channel}
+AdaRound's objective function is expected to approach zero after training. Let us define the weight perturbation matrix as $\Delta W = W - \hat{W}$. The objective function can be rewritten as the following.
+\begin{align}
+\|Wx - \hat{W}x\|_F^2 = \|\Delta W x\|_F^2
+\end{align}
+After optimization, we expect the following.
+\begin{align}
+\|\Delta W x\|_F^2 \approx 0 \iff \Delta W x \approx 0
+\end{align}
+
+We notice that $x \subset \mathcal{N}(\Delta W)$. In other words, the training data $x$ used to calibrate the AdaRound process lies within the null space of the weight perturbation matrix $\Delta W$. 
+
+\subsection{Method}
+An attacker with access to the original weights $W$ and the quantized weights $\hat{W}$ can generate a sample $\hat{x}$ that lies within this null space. We can initialize a $\hat{x}$ from random noise and apply Stochastic Gradient Descent with the objective $\arg\min_{\hat{x}} \|\Delta W \hat{x}\|_2^2$, as described in Algorithm \ref{alg:inversion}.
+
+\begin{algorithm}[H]
+\caption{Proposed Inversion Method}\label{alg:inversion}
+\begin{algorithmic}[1]
+\Require $W$, $\hat{W}$, $\hat{x}_{\text{init}}$, Number of Iterations $K$, Learning Rate $\eta$
+\State $\Delta W \gets W - \hat{W}$
+\State $\hat{x} \gets \hat{x}_\text{init}$
+\For{$k = 1$ \textbf{to} $K$}
+    \State $\mathcal{L}  \gets \sum \left( \Delta W  \tanh(\hat{x}) \right)^2$ (Forward pass)
+    \State $\frac{\partial \mathcal{L}}{\partial \hat{x}} \gets \text{Autograd}(\mathcal{L}, \hat{x})$ (Backward pass via autograd~\cite{paszkePyTorchImperativeStyle2019})
+    \State $\hat{x} \gets \hat{x} - \eta \frac{\partial\mathcal{L}}{\partial{\hat{x}}}$ (Update $\hat{x}$)
+\EndFor
+\State \Return $\tanh(\hat{x})$
+\end{algorithmic}
+\end{algorithm}
+
+Note that the objective can be rewritten as the following.
+\begin{align}
+\|\Delta W \hat{x}\|_2^2 = (\Delta W \hat{x})^T(\Delta W \hat{x}) = \hat{x}^T (\Delta W^T \Delta W) \hat{x}
+\end{align}
+A simple optimization can therefore be made by computing the Gram matrix $G = \Delta W^T \Delta W$ once, then use it to calculate the objective as $\hat{x}^TG\hat{x}$ in each iteration. (See Algorithm \ref{alg:inversion_optimized})
+
+\begin{algorithm}[H]
+\caption{Proposed Inversion with Optimization}\label{alg:inversion_optimized}
+\begin{algorithmic}[1]
+\Require $W$, $\hat{W}$, $\hat{x}_{\text{init}}$, Number of Iterations $K$, Learning Rate $\eta$
+\State $\Delta W \gets W - \hat{W}$
+\State $\hat{x} \gets \hat{x}_\text{init}$
+\State $G \gets \Delta W^T \Delta W$
+\For{$k = 1$ \textbf{to} $K$}
+    \State $\mathcal{L}  \gets \sum \left( \tanh(\hat{x})^TG  \tanh(\hat{x}) \right)$ (Forward pass)
+    \State $\frac{\partial \mathcal{L}}{\partial \hat{x}} \gets \text{Autograd}(\mathcal{L}, \hat{x})$ (Backward pass via autograd~\cite{paszkePyTorchImperativeStyle2019})
+    \State $\hat{x} \gets \hat{x} - \eta \frac{\partial\mathcal{L}}{\partial{\hat{x}}}$ (Update $\hat{x}$)
+\EndFor
+\State \Return $\tanh(\hat{x})$
+\end{algorithmic}
+\end{algorithm}
+
+\section{Gradient-Aware Adaptive Rounding}
+To reconcile AdaRound's assumption that the gradient term in Equation \ref{eq:adaround_taylor_expansion} can be ignored, and Central Flows' evidence that the gradient is nonzero even for pretrained converged models, we propose a modified version of AdaRound to incorporate awareness of the local gradient.
 
 In order to minimize
 \begin{align}
     \mathbb{E} \left[ g^{(w)^T} \Delta W \right],
 \end{align}
-we can attempt to force $\Delta W$ to have the same sign as $-g^{(w)^T}$. We approximate this by finetuning a model on a small amount of training data, and compute the Exponential Moving Average (EMA) of the model during each iteration. We then use $\text{sign}(W'_{\text{avg}} - W)$, the sign of the difference between the weights before and after finetuning, as a proxy to $-\text{sign}\left(g^{(w)^T}\right)$. Finally, we add the Binary Cross Entropy loss between the current rounding directions and $\text{sign}(W'_{\text{avg}} - W)$ as a penalty term to AdaRound's optimization objective.
+we can attempt to force $\Delta W$ to have the same sign as $-g^{(w)^T}$. We approximate this by finetuning a model on a small amount of training data, and compute the Exponential Moving Average (EMA) of the model during each iteration. We then use $\text{sign}(W'_{\text{avg}} - W)$, the sign of the difference between the weights before and after finetuning, as a proxy to $-\text{sign}\left(g^{(w)^T}\right)$. Finally, we add the Binary Cross Entropy (BCE) between the current rounding directions and $\text{sign}(W'_{\text{avg}} - W)$ as a penalty term to AdaRound's optimization objective.
 
 \begin{algorithm}[H]
-\caption{Proposed Method (Finetuning)}\label{alg:proposed_finetuning}
+\caption{Gradient-Aware Adaptive Rounding (Finetuning)}\label{alg:gradient_aware_adaround_finetuning}
 \begin{algorithmic}[1]
-\Require $W$, $X$ (calibration data), $\eta$ (learning rate), $B$ (batch size)
-\Ensure Finetuned model $W'$, EMA of models during finetuning $W'_{\text{avg}}$
-\State $W' \gets W$
-\State $W'_{\text{avg}} \gets W$
+\Require $\mathbf{W}$, $X$ (calibration data), $\eta$ (learning rate), $B$ (batch size)
+\Ensure EMA of models during finetuning $W'_{\text{avg}}$
+\State $\mathbf{W}' \gets \mathbf{W}$
+\State $\mathbf{W}'_{\text{avg}} \gets \mathbf{W}$
 \State $N \gets \frac{X}{B}$ \Comment{Number of Iterations}
 \State $\alpha \gets \frac{2}{N+1}$ \Comment{EMA Smoothing Factor}
 \For{each batch $x_b$ in $X$}
-    \State $\hat{x}_b \gets W'(x_b)$ \Comment{Forward pass}
+    \State $\hat{x}_b \gets \mathbf{W}'(x_b)$ \Comment{Forward pass}
     \State $\mathcal{L} \gets \text{CrossEntropyLoss}(\hat{x}_b, x_b)$
-    \State $W' \gets W' - \eta \cdot \nabla \mathcal{L}$ \Comment{Backward pass}
-    \State $W'_{\text{avg}} \gets \alpha \cdot W'_{\text{avg}} + (1 - \alpha) \cdot W'$
+    \State $\mathbf{W}' \gets \mathbf{W}' - \eta \cdot \nabla \mathcal{L}$ \Comment{Backward pass}
+    \State $\mathbf{W}'_{\text{avg}} \gets \alpha \cdot \mathbf{W}'_{\text{avg}} + (1 - \alpha) \cdot \mathbf{W}'$ \Comment{Update EMA}
 \EndFor
-\State \Return $W'$, $W'_{\text{avg}}$
+\State \Return $\mathbf{W}'_{\text{avg}}$
 \end{algorithmic}
 \end{algorithm}
 
 \begin{algorithm}[H]
-\caption{Proposed Method (Calibration)}\label{alg:calibration}
+\caption{Gradient-Aware Adaptive Rounding (Quantization)}\label{alg:gradient_aware_adaround_quantization}
 \begin{algorithmic}[1]
-\Require $W$, $W'_{\text{avg}}$, $X$ (calibration data), $\eta$ (learning rate), $t$ (number of iterations)
-\Ensure Quantized model $W_q$
-\State (TODO)
+\Require $\mathbf{W}$, $\mathbf{W}'_{\text{avg}}$, $X$ (calibration data), $t$ (number of iterations), $b$ (target bit width), $\beta$ (regularization parameter), $\psi$ (BCE loss multiplier)
+\Ensure Quantized model $\mathbf{W}_q$, scales
 
-\State \Return $W_q$
+\State $x_{in} \gets \textsc{CacheActivations}(\mathbf{W}, X)$ \Comment{Forward pass on calibration data to cache input activations}
+\For{$w_j$ in $\mathbf{W}$}
+\State $\mathbf{D} \gets \textsc{Sign}(\mathbf{W}'_{\text{avg}} - \mathbf{W})$
+\State $q_{\text{min}} \gets -2^{b - 1}$
+\State $q_{\text{max}} \gets 2^{b - 1} - 1$
+\State $\text{scales}_j \gets \frac{\max(w_j)}{q_{\text{max}}}$ \Comment{Store scale for output}
+\State $\mathbf{V}_j \gets h^{-1}(w_j - \lfloor w_j \rfloor)$ \Comment{Initialize $\mathbf{V}_j$ so that it corresponds to the fraction of each weight}
+
+\For{$i \in \{0 \ldots t\}$}
+\State $\beta \gets \textsc{Anneal}(\beta)$
+\State $\hat{w}_j \gets \text{clamp}\left(\lfloor \frac{w_j}{\text{scales}_j} \rfloor + h(\mathbf{V}_j), q_\text{min}, q_\text{max}\right)$
+\State $\mathcal{L} \gets \underbrace{\psi \cdot \textsc{BCE}(h(\mathbf{V}_j), \mathbf{D})}_{\text{Proposed addition}} + \|w_j x_{in} - \hat{w}_j x_{in}\|_F^2 + \sum_{i, j} \left(1 - \lvert 2h(\mathbf{V}_{i,j}) - 1\rvert^\beta\right)$
+\State $\mathbf{V} \gets \mathbf{V} - \nabla \mathcal{L}$ \Comment{via autograd}
+\EndFor
+\State $\mathbf{W}_{Q_{i, j}} \gets \begin{cases}
+    \lceil w_{i, j} \rceil, &\text{where } h(\mathbf{V}_{i,j}) \geq 0.5 \\
+    \lfloor w_{i, j} \rfloor, &\text{otherwise}
+\end{cases}$ \Comment{Finalize quantization}
+\EndFor
+\State \Return $\mathbf{W}_Q$, scales
 \end{algorithmic}
 \end{algorithm}
 

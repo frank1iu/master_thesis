@@ -4,5 +4,162 @@
 
 \begin{document}
 \chapter{Evaluation}
+In this chapter, we separately evaluate the AdaRound inversion method, and the proposed gradient-aware adaptive rounding method.
+
+\section{AdaRound Inversion Method}
+\subsection{Experiment Setup} \label{sec:adaround_inversion_experiment_setup}
+We trained MLPs on these datasets: Olivetti Faces~\cite{JMLR:v12:pedregosa11a}, Chest X-Ray Images (Pneumonia)~\cite{kermanyIdentifyingMedicalDiagnoses2018}, and the Weizmann Horse Database~\cite{weizmannHorseDB}, on a single computer (CPU: Intel Xeon w9-3495X, GPU: 1x NVIDIA GeForce RTX 4090). We perform 500 iterations of AdaRound quantization using the Adam optimizer, then obtain $\Delta W$, the difference between the quantized and the original model. For each model, we generate 10 random samples from a Gaussian distribution, then train for 3000 iterations using the Adam optimizer. We report the SSIM (Structural Similarity Index Measure), PSNR (Peak Signal-to-Noise ratio), and Normalized RMSE (Root Mean Squared Error) between the mean of the calibration data and the mean of 10 generated samples before and after our inversion method in Table \ref{tab:adaround_inversion_metrics}. We also report a visualization of the mean calibration sample vs. the mean generated sample in Figures \ref{fig:adaround_inversion_olivetti}, \ref{fig:adaround_inversion_xray}, and \ref{fig:adaround_inversion_horse}.
+
+\subsection{Results}
+\begin{table}[H]
+\centering
+\caption{Metrics from Random Initialization vs. Our Proposed Method}
+\label{tab:adaround_inversion_metrics}
+\begin{tabular}{|l|l|l|l|}
+\hline
+                        & SSIM $\uparrow$       & PSNR $\uparrow$        & NRMSE $\downarrow$    \\ \hline
+Olivetti Faces (Before) & 0.00                  & 3.50                   & 1.16                  \\ \hline
+Olivetti Faces (After)  & \textbf{0.14 (+0.14)} & \textbf{12.83 (+9.33)} & \textbf{0.40 (-0.76)} \\ \hline
+Chest X-Ray (Before)    & 0.00                  & 2.61                   & 1.10                  \\ \hline
+Chest X-Ray (After)     & \textbf{0.07 (+0.07)} & \textbf{10.13 (+7.52)} & \textbf{0.46 (-0.64)} \\ \hline
+Horse DB (Before)       & 0.00                  & 2.60                   & 1.11                  \\ \hline
+Horse DB (After)        & \textbf{0.07 (+0.07)} & \textbf{10.15 (+7.55)} & \textbf{0.47 (-0.64)} \\ \hline
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{img/adaround_inversion/16acd81804674b3b8d69cbe4807a3e0f-result.png}
+    \caption{Results on Olivetti Faces}
+    \label{fig:adaround_inversion_olivetti}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{img/adaround_inversion/04a80ceb974248ffb6864725da78e909-result.png}
+    \caption{Results on Chest X-Ray Images (Pneumonia)}
+    \label{fig:adaround_inversion_xray}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{img/adaround_inversion/8bbfd491fcb644dda0d9a7b3db367b66-result.png}
+    \caption{Results on Weizmann Horse Database}
+    \label{fig:adaround_inversion_horse}
+\end{figure}
+
+We notice an increase in SSIM and PSNR, and a decrease in Normalized RMSE, implying that the mean of the generated samples resembles the mean of the calibration samples to some extent.
+
+\subsection{Ablation Study}
+We perform an ablation study by applying our inversion method to round-to-nearest (RTN) quantization. Since RTN does not use calibration data, we compare our method's samples to the mean of the training data instead. We report the same metrics as the main experiment (SSIM, PSNR, and Normalized RMSE) in Table \ref{tab:adaround_inversion_ablation} and a visualization in Figures \ref{fig:olivetti_ablation}, \ref{fig:xray_ablation}, and \ref{fig:horse_ablation}.
+
+\begin{table}[H]
+\centering
+\caption{Results from Ablation Study}
+\label{tab:adaround_inversion_ablation}
+\begin{tabular}{|l|l|l|l|}
+\hline
+ &  SSIM $\uparrow$ & PSNR $\uparrow$ & NRMSE $\downarrow$ \\ \hline
+Olivetti Faces (Before) & 0.00 & 2.89 & 1.12 \\ \hline
+Olivetti Faces (After) & 0.00 & 3.90 (+1.01) & 1.00 (-0.12) \\ \hline
+Chest X-Ray (Before) & 0.00 & 2.77 & 1.11 \\ \hline
+Chest X-Ray (After) & 0.00 & 3.64 (+0.87) & 1.00 (-0.11) \\ \hline
+Horse DB (Before) & 0.00 & 2.57 & 1.10 \\ \hline
+Horse DB (After) & 0.00 & 3.38 (+0.81) & 1.00 (-0.10) \\ \hline
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{img/adaround_inversion/ablation-31bebceaa4bb4cd2b9305c23af7e5d8c-result.png}
+    \caption{Ablation Study Results on Olivetti Faces}
+    \label{fig:olivetti_ablation}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{img/adaround_inversion/ablation-3f5b592012394a26a9ef69d4e24cf68f-result.png}
+    \caption{Ablation Study Results on Chest X-Ray Images (Pneumonia)}
+    \label{fig:xray_ablation}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{img/adaround_inversion/ablation-bdc15cdff0e94745bebd2a5af058167e-result.png}
+    \caption{Ablation Study Results on Weizmann Horse Database}
+    \label{fig:horse_ablation}
+\end{figure}
+
+We notice 0.00 SSIM on all datasets, implying that the generated samples do not look like the calibration data at all.
+
+\subsection{Discussion}
+\subsubsection{Main Experiment}
+From the metrics, we observe an increase in SSIM and PSNR, and a decrease in Normalized RMSE after training. In the images, we can see the silhouettes and outlines of the calibration set, although it is quite difficult to make out. From the results, we can conclude that the $\Delta W$ of a model quantized using AdaRound does contain information about the calibration data. 
+
+\subsubsection{Ablation Study}
+Interestingly, we see a slight improvement in PSNR and NRMSE in the ablation study. However, crucially the SSIM shows that round-to-nearest quantization is not vulnerable to our method. In other words, our method indeed extracts information about the calibration data in data-dependent quantization methods.
+
+\subsubsection{Overall}
+We demonstrate that AdaRound encodes information from the calibration data into the weight perturbation matrix. By targeting the null space of this matrix, our proposed method generates samples that resembles outlines of the calibration data. While the reconstructed data only represents the mean of the calibration data rather than exact instances, the leakage is significant enough to warrant reconsideration of the security of data-dependent PTQ methods. 
+
+\section{Gradient-Aware Adaptive Rounding}
+\subsection{Experiment Setup}
+We evaluate the proposed method on the same computer as described in Section \ref{sec:adaround_inversion_experiment_setup}. We report the perplexity of our two language models (TinyStories v1 and TinyStories v2) in Table \ref{tab:gradient_aware_adaround_results}. 
+
+\subsection{Results}
+We observe neutral results using the proposed method.
+
+\begin{table}[H]
+\centering
+\caption{Perplexity Evaluation of Proposed Method}
+\label{tab:gradient_aware_adaround_results}
+\begin{tabular}{|l|l|l|}
+\hline
+Type of Quantization & TinyStories V1   & TinyStories V2  \\ \hline
+None (Unquantized Model)          & 11.9006          & 8.0994          \\ \hline \hline
+Round-to-Nearest     & 11.9219          & 8.1224          \\ \hline
+AdaRound             & 11.9216          & \textbf{8.1176} \\ \hline
+Proposed Method      & \textbf{11.9166} & 8.1207          \\ \hline
+\end{tabular}
+\end{table}
+
+\subsection{Ablation Study}
+We report an ablation study by ablating two possible elements of the proposed method: AdaRound and EMA. Ablating EMA means we use the final finetuned model weights instead of the EMA of the model weights during all iterations. Ablating AdaRound means we steer the rounding using only the sign of the weight perturbation matrix, as described in Algorithm \ref{alg:ablate_adaround}.
+
+\begin{table}[H]
+\centering
+\caption{Perplexity Evaluation of Ablation Study}
+\label{tab:adaround_ablation_study}
+\begin{tabular}{|c|c|l|l|}
+\hline
+AdaRound with BCE Loss & EMA          & TinyStories V1 & TinyStories V2  \\ \hline
+$\checkmark$ & $\checkmark$ & 11.9166        & 8.1546          \\ \hline
+$\checkmark$ & $\times$     & 11.9216        & 8.1179          \\ \hline
+$\times$     & $\checkmark$ & 11.9166        & 8.1546          \\ \hline
+$\times$     & $\times$     & \textbf{11.9050}        & \textbf{8.1084} \\ \hline
+\end{tabular}
+\end{table}
+
+\begin{algorithm}[H]
+\caption{Gradient-based Steering without AdaRound}\label{alg:ablate_adaround}
+\begin{algorithmic}[1]
+\Require $\mathbf{W}$ (unquantized weights), $\mathbf{W}'$ (calibration model), $b$ (target bit width)
+\Ensure Quantized model $\mathbf{W}_q$
+\Function{CustomRound}{$\mathbf{W}$, $\mathbf{W}'$}
+  \State $\mathbf{W}_{i,j} \gets \begin{cases}
+    \lceil \mathbf{W}_{i, j} \rceil, &\text{where } \mathbf{W}_{i, j} < \mathbf{W}'_{i, j} \\
+    \lfloor \mathbf{W}_{i, j} \rfloor, &\text{otherwise}
+\end{cases}$
+  \State \Return $\mathbf{W}$
+\EndFunction
+\State $q_{\text{min}} \gets -2^{b - 1}$
+\State $q_{\text{max}} \gets 2^{b - 1} - 1$
+\State $\text{scale} \gets \frac{\max(\mathbf{W})}{q_{\text{max}}}$
+\State $\mathbf{W}_q \gets \text{clamp}\left(\textsc{CustomRound}(\frac{\mathbf{W}}{\text{scale}}), q_\text{min}, q_\text{max}\right)$
+\State \Return $\mathbf{W}_q$, scale
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Discussion}
 
 \end{document}
