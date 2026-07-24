@@ -102,6 +102,9 @@ Interestingly, we see a slight improvement in PSNR and NRMSE in the ablation stu
 \subsubsection{Overall}
 We demonstrate that AdaRound encodes information from the calibration data into the weight perturbation matrix. By targeting the null space of this matrix, our proposed method generates samples that resembles outlines of the calibration data. While the reconstructed data only represents the mean of the calibration data rather than exact instances, the leakage is significant enough to warrant reconsideration of the security of data-dependent PTQ methods. 
 
+\subsection{Limitations}
+\todo{Low SSIM + can only recover means of calibration data}
+
 \section{Gradient-Aware Adaptive Rounding}
 \subsection{Experiment Setup}
 We evaluate the proposed method on the same computer as described in Section \ref{sec:adaround_inversion_experiment_setup}. We report the perplexity of our two language models (TinyStories v1 and TinyStories v2) in Table \ref{tab:gradient_aware_adaround_results}. 
@@ -161,5 +164,7 @@ $\times$     & $\times$     & \textbf{11.9050}        & \textbf{8.1084} \\ \hlin
 \end{algorithm}
 
 \subsection{Discussion}
+
+\subsection{Limitations}
 
 \end{document}
