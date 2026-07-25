@@ -7,6 +7,27 @@
 
 \section{Background}
 
+\subsection{Bias-Variance Tradeoff and Scaling Laws}
+
+\subsubsection{Classical Perspective}
+Consider a classifier over $k \in \{1, 2, \dots K\}$, trained with Mean Squared Error loss. Its test error is often attributed to the following three sources~\cite{6797087}.
+\begin{align}
+    \mathcal{E}_\text{total} = \mathcal{E}_\text{noise} + \mathcal{E}_\text{bias} + \mathcal{E}_\text{variance}
+\end{align}
+The first term is an intrinstic error term representing irreducible noise, the second term measure the systematic error the model makes, and the third term captures the variance in the model's predictions. As the capacity of a model increases, the bias decreases while the variance increases, leading to a parabolic test error curve~\cite{nealModernTakeBiasVariance2019a}. It is said that:
+
+\begin{quote}
+    The price to pay for achieving low bias is high variance. --- Geman et. al., 1992~\cite{6797087}
+\end{quote}
+
+This means that if the model's capacity is too small, it may underfit the training data and perform poorly on unseen data. If the model's capacity is too large, it may overfit to spurious patterns in the training data, resulting in low accuracy on unseen data anyways~\cite{belkinReconcilingModernMachine2019}. It was therefore common to carefully select the complexity of models to achieve the optimal balance between bias and variance.
+
+\todo{Put in the image from Neal et. al. here}
+
+\subsubsection{Modern Perspective}
+
+
+
 \section{Problem Definition}
 
 \section{Contributions}
