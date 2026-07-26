@@ -87,10 +87,10 @@ Therefore, we observe an important need for efficient language models that can b
 
 \subsection{Survey of Compression Methods}
 The following methods are typically used for the compression of deep neural networks.
-\paragraph{Weight Pruning.} Model size can be shrunk, and inference can be made compute-efficient, by setting some weights to zeroes, resulting in sparse weight matrices.\cite{wangStructuredPruningLarge2020a}
-\paragraph{Knowledge Distillation.} It is shown that by making a smaller model learn to match output logits of a larger model (or an ensemble of models), parts of the knowledge in the largest model can be transferred to the smaller model.\cite{hintonDistillingKnowledgeNeural2015c}
-\paragraph{Weight Palettization.} This method clusters weights (e.g. via $k$-means), then stores every weight as the centroid of the cluster they belong to. \cite{wuDeep$k$MeansReTraining2018a}
-\paragraph{Weight Quantization.} We focus on this method for our thesis. This method stores weights in a data type of less bit width (e.g. int8), compared to the original data type (e.g. float32). \cite{jacobQuantizationTrainingNeural2017a}
+\paragraph{Weight Pruning.} Model size can be shrunk, and inference can be made compute-efficient, by setting some weights to zeroes, resulting in sparse weight matrices~\cite{wangStructuredPruningLarge2020a}.
+\paragraph{Knowledge Distillation.} It is shown that by making a smaller model learn to match output logits of a larger model (or an ensemble of models), parts of the knowledge in the largest model can be transferred to the smaller model~\cite{hintonDistillingKnowledgeNeural2015c}.
+\paragraph{Weight Palettization.} This method clusters weights (e.g. via $k$-means), then stores every weight as the centroid of the cluster they belong to~\cite{wuDeep$k$MeansReTraining2018a}.
+\paragraph{Weight Quantization.} We focus on this method for our thesis. This method stores weights in a data type of less bit width (e.g. int8), compared to the original data type (e.g. float32)~\cite{jacobQuantizationTrainingNeural2017a}.
 
 \section{Contributions}
 

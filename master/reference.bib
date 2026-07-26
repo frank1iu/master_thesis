@@ -171,6 +171,38 @@
   keywords = {Computer Science - Artificial Intelligence,Computer Science - Machine Learning}
 }
 
+@misc{hintonDistillingKnowledgeNeural2015c,
+  title = {Distilling the {{Knowledge}} in a {{Neural Network}}},
+  author = {Hinton, Geoffrey and Vinyals, Oriol and Dean, Jeff},
+  year = 2015,
+  month = mar,
+  number = {arXiv:1503.02531},
+  eprint = {1503.02531},
+  primaryclass = {stat.ML},
+  publisher = {arXiv},
+  doi = {10.48550/arXiv.1503.02531},
+  urldate = {2026-07-26},
+  abstract = {A very simple way to improve the performance of almost any machine learning algorithm is to train many different models on the same data and then to average their predictions. Unfortunately, making predictions using a whole ensemble of models is cumbersome and may be too computationally expensive to allow deployment to a large number of users, especially if the individual models are large neural nets. Caruana and his collaborators have shown that it is possible to compress the knowledge in an ensemble into a single model which is much easier to deploy and we develop this approach further using a different compression technique. We achieve some surprising results on MNIST and we show that we can significantly improve the acoustic model of a heavily used commercial system by distilling the knowledge in an ensemble of models into a single model. We also introduce a new type of ensemble composed of one or more full models and many specialist models which learn to distinguish fine-grained classes that the full models confuse. Unlike a mixture of experts, these specialist models can be trained rapidly and in parallel.},
+  archiveprefix = {arXiv},
+  keywords = {Computer Science - Machine Learning,Computer Science - Neural and Evolutionary Computing,Statistics - Machine Learning}
+}
+
+@misc{jacobQuantizationTrainingNeural2017a,
+  title = {Quantization and {{Training}} of {{Neural Networks}} for {{Efficient Integer-Arithmetic-Only Inference}}},
+  author = {Jacob, Benoit and Kligys, Skirmantas and Chen, Bo and Zhu, Menglong and Tang, Matthew and Howard, Andrew and Adam, Hartwig and Kalenichenko, Dmitry},
+  year = 2017,
+  month = dec,
+  number = {arXiv:1712.05877},
+  eprint = {1712.05877},
+  primaryclass = {cs.LG},
+  publisher = {arXiv},
+  doi = {10.48550/arXiv.1712.05877},
+  urldate = {2026-07-26},
+  abstract = {The rising popularity of intelligent mobile devices and the daunting computational cost of deep learning-based models call for efficient and accurate on-device inference schemes. We propose a quantization scheme that allows inference to be carried out using integer-only arithmetic, which can be implemented more efficiently than floating point inference on commonly available integer-only hardware. We also co-design a training procedure to preserve end-to-end model accuracy post quantization. As a result, the proposed quantization scheme improves the tradeoff between accuracy and on-device latency. The improvements are significant even on MobileNets, a model family known for run-time efficiency, and are demonstrated in ImageNet classification and COCO detection on popular CPUs.},
+  archiveprefix = {arXiv},
+  keywords = {Computer Science - Machine Learning,Statistics - Machine Learning}
+}
+
 @misc{jakeUberBurnedIts,
   title = {Uber Burned through Its Entire 2026 {{AI}} Budget in Four Months. {{Now}} Its {{COO}} Is Questioning Whether It's Worth It},
   author = {Jake, Angelo},
@@ -482,6 +514,19 @@
   keywords = {Computer Science - Computation and Language,Computer Science - Machine Learning}
 }
 
+@inproceedings{wangStructuredPruningLarge2020a,
+  title = {Structured {{Pruning}} of {{Large Language Models}}},
+  booktitle = {Proceedings of the 2020 {{Conference}} on {{Empirical Methods}} in {{Natural Language Processing}} ({{EMNLP}})},
+  author = {Wang, Ziheng and Wohlwend, Jeremy and Lei, Tao},
+  year = 2020,
+  pages = {6151--6162},
+  publisher = {Association for Computational Linguistics},
+  address = {Online},
+  doi = {10.18653/v1/2020.emnlp-main.496},
+  urldate = {2026-07-26},
+  langid = {english}
+}
+
 @inproceedings{weizmannHorseDB,
   title = {Combining Top-down and Bottom-up Segmentation},
   author = {Borenstein, E. and Sharon, E. and Ullman, Shimon},
@@ -490,6 +535,23 @@
   volume = {2004},
   pages = {46--46},
   doi = {10.1109/CVPR.2004.40}
+}
+
+@misc{wuDeep$k$MeansReTraining2018a,
+  title = {Deep \$k\$-{{Means}}: {{Re-Training}} and {{Parameter Sharing}} with {{Harder Cluster Assignments}} for {{Compressing Deep Convolutions}}},
+  shorttitle = {Deep \$k\$-{{Means}}},
+  author = {Wu, Junru and Wang, Yue and Wu, Zhenyu and Wang, Zhangyang and Veeraraghavan, Ashok and Lin, Yingyan},
+  year = 2018,
+  month = jun,
+  number = {arXiv:1806.09228},
+  eprint = {1806.09228},
+  primaryclass = {cs.LG},
+  publisher = {arXiv},
+  doi = {10.48550/arXiv.1806.09228},
+  urldate = {2026-07-26},
+  abstract = {The current trend of pushing CNNs deeper with convolutions has created a pressing demand to achieve higher compression gains on CNNs where convolutions dominate the computation and parameter amount (e.g., GoogLeNet, ResNet and Wide ResNet). Further, the high energy consumption of convolutions limits its deployment on mobile devices. To this end, we proposed a simple yet effective scheme for compressing convolutions though applying k-means clustering on the weights, compression is achieved through weight-sharing, by only recording \$K\$ cluster centers and weight assignment indexes. We then introduced a novel spectrally relaxed \$k\$-means regularization, which tends to make hard assignments of convolutional layer weights to \$K\$ learned cluster centers during re-training. We additionally propose an improved set of metrics to estimate energy consumption of CNN hardware implementations, whose estimation results are verified to be consistent with previously proposed energy estimation tool extrapolated from actual hardware measurements. We finally evaluated Deep \$k\$-Means across several CNN models in terms of both compression ratio and energy consumption reduction, observing promising results without incurring accuracy loss. The code is available at https://github.com/Sandbox3aster/Deep-K-Means},
+  archiveprefix = {arXiv},
+  keywords = {Computer Science - Computer Vision and Pattern Recognition,Computer Science - Machine Learning,Statistics - Machine Learning}
 }
 
 @misc{yangQwen3TechnicalReport2025b,
