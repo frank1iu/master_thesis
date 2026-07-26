@@ -64,7 +64,7 @@ Seemingly, simply adding more training data and parameters allows one to create 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.6\textwidth]{img/intro/gerstmayr_llm_scaling.png}
-    \caption{Observed exponential scaling of LLM sizes over time~\cite{gerstmayrMultibodyModelsGenerated2024}(Note: The GPT-4 figure is an estimate)}
+    \caption{Observed exponential scaling of LLM sizes over time~\cite{gerstmayrMultibodyModelsGenerated2024} (Note: The GPT-4 figure is an estimate)}
     \label{fig:gerstmayr_llm_scaling}
 \end{figure}
 
@@ -73,7 +73,7 @@ Seemingly, simply adding more training data and parameters allows one to create 
 \subsection{Problem Formulation}
 The exponential scaling of LLM sizes has inadvertently resulted in models that are extremely challenging to deploy, thus causing users to rely on third-party providers for LLM usage. This resulted in the following effects.
 
-\paragraph{Environmental Effects.} $CO_2$ equivalent emissions ($tCO_2e$) seems to also grow over time. GPT-3's training had an estimated $tCO_2e$ of $\sim$552.1 tons~\cite{pattersonCarbonEmissionsLarge2021}, GPT-4's training had an estimated $tCO_2e$ of $\sim$6912 tons~\cite{kausarQuantifyingClimateRisk2026}, and Llama 3.3~\cite{grattafioriLlama3Herd2024c}'s training had an estimated $tCO_2e$ of $\sim$11,390 tons. Even worse, it is shown that an LLM incurs ``significantly higher carbon emissions'' during inference than training~\cite{fuLLMCO2AdvancingAccurate2025}.
+\paragraph{Environmental Effects.} $\text{CO}_2$-equivalent emissions ($t\text{CO}_2e$) seems to also grow over time. GPT-3's training had an estimated $t\text{CO}_2e$ of $\sim$552.1 tons~\cite{pattersonCarbonEmissionsLarge2021}, GPT-4's training had an estimated $t\text{CO}_2e$ of $\sim$6912 tons~\cite{kausarQuantifyingClimateRisk2026}, and Llama 3.3~\cite{grattafioriLlama3Herd2024c}'s training had an estimated $t\text{CO}_2e$ of $\sim$11,390 tons. Even worse, it is shown that an LLM incurs ``significantly higher carbon emissions'' during inference than training~\cite{fuLLMCO2AdvancingAccurate2025}.
 \paragraph{Cost.} As LLMs scale exponentially, inference costs also become expensive. For example, OpenAI o1~\cite{openaiOpenAIO1System2026} in ``pro mode'' costs \$150 per 1 million tokens input, and \$600 per 1 million tokens output. We see evidence of heavy AI cost burden in companies: Uber's yearly AI budget was exhausted in 4 months, while Microsoft began cancelling Claude Code licenses just 6 months after acquiring them~\cite{jakeUberBurnedIts}.
 \paragraph{Reliability.} Using third-party providers can cause a single point of failure, and an outage can have severe effects on mission-critical tasks. For example, it is observed that whenever ChatGPT has an outage, stock trading volume goes down~\cite{chengDoesGenerativeAI2025}.
 
