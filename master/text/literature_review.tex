@@ -118,10 +118,9 @@ We implement AdaRound in Algorithm \ref{alg:adaround}.
 \end{algorithmic}
 \end{algorithm}
 
-\subsection{Empirical Results}
-\todo{Report AdaRound results}
-
 \subsection{Limitations}
-\todo{Two things here: 1) zero gradient assumption, 2) data leakage}
+We identify two important limitations of AdaRound. First, using calibration data can cause some information to be encoded into the weight perturbation matrix. We empirically verify this by demonstrating a novel inversion method to reconstruct representations of training data. Second, the assumption in Equation \ref{eq:adaround_taylor_expansion} that the gradient of the loss function for pretrained converged models is challenged by recent literature, which we review below.
+
+\section{Central Flows}
 
 \end{document}
