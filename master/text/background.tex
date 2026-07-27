@@ -168,14 +168,14 @@ Parameter Count                          & \multicolumn{1}{c|}{1.17M}           
 Training Data                                   & \multicolumn{2}{c|}{TinyStories v1}                  & TinyStories v2        \\ \hline
 Tokenizer (Vocab Size)                 & \multicolumn{1}{c|}{GPT-Neo}          & SentencePiece                & SentencePiece                \\ \hline
 Vocab Size                             & \multicolumn{1}{c|}{10000}            & 1024                  & 1024                  \\ \hline
-Perplexity (TinyStories v1) & \multicolumn{1}{c|}{19.3919} & 11.9006      & ---                   \\ \hline
-Perplexity (TinyStories v2) & \multicolumn{1}{c|}{---}              & ---                   & 8.0994                \\ \hline
+Perplexity $\downarrow$ (TinyStories v1) & \multicolumn{1}{c|}{19.3919} & \textbf{11.9006}      & ---                   \\ \hline
+Perplexity $\downarrow$ (TinyStories v2)& \multicolumn{1}{c|}{---}              & ---                   & 8.0994                \\ \hline
 \end{tabular}
 \end{table}
 
 \todo{Add qualitative results (actual model outputs) here}
 
-We observe that our model results in better perplexity than the reference model despite being much smaller. In \verb|float32|, each weight is 4 bytes, so our model is expected to take only $\sim2.17$MiB of disk space (the actual disk space, including the model's configuration, is $\sim2.22$MiB). Models of this scale can be suitable for devices with extremely low compute and/or memory.
+We observe that our model results in better perplexity than the reference model despite being much smaller. In \verb|float32|, each weight is 4 bytes, so our TinyStories v1 model with 0.57M parameters is expected to take only $\sim2.17$MiB of disk space (the actual disk space, including the model's configuration, is $\sim2.22$MiB). Models of this scale can be suitable for devices with extremely low compute and/or memory.
 
 We will use our models as a base to conduct several more experiments.
 \todo{Consider an ablation study to train the same GPT-Neo model, with only a different tokenizer}

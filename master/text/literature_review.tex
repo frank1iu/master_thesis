@@ -119,8 +119,45 @@ We implement AdaRound in Algorithm \ref{alg:adaround}.
 \end{algorithm}
 
 \subsection{Limitations}
-We identify two important limitations of AdaRound. First, using calibration data can cause some information to be encoded into the weight perturbation matrix. We empirically verify this by demonstrating a novel inversion method to reconstruct representations of training data. Second, the assumption in Equation \ref{eq:adaround_taylor_expansion} that the gradient of the loss function for pretrained converged models is challenged by recent literature, which we review below.
+We identify two important limitations of AdaRound. First, using calibration data can cause some information to be encoded into the weight perturbation matrix. We empirically verify this by demonstrating a novel inversion method to reconstruct representations of training data. Second, the assumption in Equation \ref{eq:adaround_taylor_expansion} that the gradient of the loss function for pretrained converged models is neglibile (for which empirical evidence was not provided) is challenged by recent literature, which we review below.
 
-\section{Central Flows}
+\section{Edge of Stability and Central Flows}
+
+In this section, we review a rebuttal to the zero-gradient assumption in Equation \ref{eq:adaround_taylor_expansion}. 
+
+Consider gradient descent~\cite{cauchyMethodeGeneralePour1847}, where we compute the gradient of the loss function then try to move the model weights in the opposite direction to minimize the loss.
+
+\begin{align}
+    \theta_{t+1} &= \theta_t - \eta \nabla \mathcal{L}(\theta)
+\end{align}
+
+While one might expect weights to follow a smooth, stable path to an optimum, gradient descent with deep neural networks almost always operate in a highly dynamic, oscillatory regime described as the \textbf{Edge of Stability}~\cite{cohenGradientDescentNeural2022a}, leading to chaotic loss curves such as the follows.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{img/literature_review/kimi_k2_loss_curve.png}
+    \caption{Training Loss Curve of Kimi K2~\cite{teamKimiK2Open2026}}
+    \label{fig:kimi_k2_loss_curve}
+\end{figure}
+
+It can be observed that the oscillations in gradient descent can be viewed as bouncing between walls of a valley of low gradient~\cite{xingWalkSGD2018}. \textbf{Central Flows}~\cite{cohenUnderstandingOptimizationDeep2025a} are differential equations that attempts to model the time-averaged trajectory of an oscillatory optimizer, illustrated as follows.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{img/literature_review/central_flows_valley.png}
+    \caption{Oscillatory Optimizer Bouncing between Walls in a Valley~\cite{cohenUnderstandingOptimizationDeep2025a}}
+    \label{fig:central_flows_valley}
+\end{figure}
+
+The oscillatory optimization also implies that the gradient for pretrained models are rarely zero. The authors empirically show that even as the training loss decreases, the gradient of a model almost stays constant, as seen in Figure \ref{fig:central_flows_gradient_norm}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/literature_review/central_flows_gradient_norm.png}
+    \caption{Gradient Norms in Vision Transformer Trained on CIFAR10~\cite[pg. 15]{cohenUnderstandingOptimizationDeep2025a}}
+    \label{fig:central_flows_gradient_norm}
+\end{figure}
+
+This observation creates a conflict with AdaRound's assumption in Equation \ref{eq:adaround_taylor_expansion} that the gradient for converged pretrained models is zero, which we attempt to reconciliate in Chapter \ref{chap:??}.\todo{Add chapter ref} 
 
 \end{document}
