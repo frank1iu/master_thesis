@@ -3,7 +3,7 @@
 \documentclass[../main.tex]{subfiles}
 
 \begin{document}
-\chapter{Introduction}
+\chapter{Introduction} \label{chap:intro}
 
 \section{Background}
 
@@ -95,5 +95,14 @@ The following methods are typically used for the compression of deep neural netw
 \section{Contributions}
 
 Our contributions in this work are twofold: First, we demonstrate a novel inversion method against AdaRound to recover coarse outlines that represent its calibration data, motivating the need to consider privacy in data-dependent quantization method. Second, we propose a gradient-aware adaptive rounding method based on AdaRound, and empirically validate the proposed method on two language models.
+
+The rest of this thesis is organized as follows:
+\begin{itemize}
+    \item In Chapter \ref{chap:preliminary}, we provide background experiments that show the potential of compression of deep neural networks. We pretrain small language models and use them as a base for exploratory experimentation.
+    \item In Chapter \ref{chap:lit_review}, we review AdaRound~\cite{nagelAdaptiveRoundingPostTraining2020a}, an existing method for superior weight rounding during quantization, and discover two limitations of the work: a privacy leakage, and a zero-gradient assertion that is refuted by Central Flows~\cite{cohenUnderstandingOptimizationDeep2025a}, a more recent work.
+    \item In Chapter \ref{chap:adaround_inversion}, we realize an inversion attack against AdaRound, which provide empirical evidence that some information of its calibration data is leaked into the weight perturbation matrix.
+    \item In Chapter \ref{chap:gradient_aware_adaround}, we attempt to reconcile AdaRound's assertion with Central Flows by incorporating gradient signal into AdaRound.
+    \item In Chapter \ref{chap:conclusion}, we conclude our findings and list possible future research directions.
+\end{itemize}
 
 \end{document}
