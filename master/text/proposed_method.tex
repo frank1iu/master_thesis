@@ -3,13 +3,10 @@
 \documentclass[../main.tex]{subfiles}
 
 \begin{document}
-\chapter{Proposed Method}
-In this chapter, we describe our two contributions: an inversion method to reconstruct representations of training data in AdaRound, and a proposed gradient-aware adaptive rounding method.
+\chapter{AdaRound Inversion Method} \label{chap:adaround_inversion}
+In this chapter, we propose and evaluate a novel inversion method to reconstruct representations of training data in AdaRound.
 
-\section{AdaRound Inversion Method}
-In this section, we will report our novel inversion method (also previously published as \cite{liuAdaRoundInversion}) to reconstruct representations of the calibration data used by AdaRound, given access to a model before and after AdaRound quantization.
-
-\subsection{Formulation of Leakage Channel}
+\section{Formulation of Leakage Channel}
 AdaRound's objective function is expected to approach zero after training. Let us define the weight perturbation matrix as $\Delta W = W - \hat{W}$. The objective function can be rewritten as the following.
 \begin{align}
 \|Wx - \hat{W}x\|_F^2 = \|\Delta W x\|_F^2
@@ -21,7 +18,7 @@ After optimization, we expect the following.
 
 We notice that $x \subset \mathcal{N}(\Delta W)$. In other words, the training data $x$ used to calibrate the AdaRound process lies within the null space of the weight perturbation matrix $\Delta W$. 
 
-\subsection{Method}
+\section{Method}
 An attacker with access to the original weights $W$ and the quantized weights $\hat{W}$ can generate a sample $\hat{x}$ that lies within this null space. We can initialize a $\hat{x}$ from random noise and apply Stochastic Gradient Descent with the objective $\arg\min_{\hat{x}} \|\Delta W \hat{x}\|_2^2$, as described in Algorithm \ref{alg:inversion}.
 
 \begin{algorithm}[H]
@@ -61,61 +58,102 @@ A simple optimization can therefore be made by computing the Gram matrix $G = \D
 \end{algorithmic}
 \end{algorithm}
 
-\section{Gradient-Aware Adaptive Rounding}
-To reconcile AdaRound's assumption that the gradient term in Equation \ref{eq:adaround_taylor_expansion} can be ignored, and Central Flows' evidence that the gradient is nonzero even for pretrained converged models, we propose a modified version of AdaRound to incorporate awareness of the local gradient.
+\section{Experiment Setup} \label{sec:adaround_inversion_experiment_setup}
+We trained MLPs on these datasets: Olivetti Faces~\cite{JMLR:v12:pedregosa11a}, Chest X-Ray Images (Pneumonia)~\cite{kermanyIdentifyingMedicalDiagnoses2018}, and the Weizmann Horse Database~\cite{weizmannHorseDB}, on a single computer (CPU: Intel Xeon w9-3495X, GPU: 1x NVIDIA GeForce RTX 4090). We perform 500 iterations of AdaRound quantization using the Adam optimizer, then obtain $\Delta W$, the difference between the quantized and the original model. For each model, we generate 10 random samples from a Gaussian distribution, then train for 3000 iterations using the Adam optimizer. We report the SSIM (Structural Similarity Index Measure), PSNR (Peak Signal-to-Noise ratio), and Normalized RMSE (Root Mean Squared Error) between the mean of the calibration data and the mean of 10 generated samples before and after our inversion method in Table \ref{tab:adaround_inversion_metrics}. We also report a visualization of the mean calibration sample vs. the mean generated sample in Figures \ref{fig:adaround_inversion_olivetti}, \ref{fig:adaround_inversion_xray}, and \ref{fig:adaround_inversion_horse}.
 
-In order to minimize
-\begin{align}
-    \mathbb{E} \left[ g^{(w)^T} \Delta W \right],
-\end{align}
-we can attempt to force $\Delta W$ to have the same sign as $-g^{(w)^T}$. We approximate this by finetuning a model on a small amount of training data, and compute the Exponential Moving Average (EMA) of the model during each iteration. We then use $\text{sign}(W'_{\text{avg}} - W)$, the sign of the difference between the weights before and after finetuning, as a proxy to $-\text{sign}\left(g^{(w)^T}\right)$. Finally, we add the Binary Cross Entropy (BCE) between the current rounding directions and $\text{sign}(W'_{\text{avg}} - W)$ as a penalty term to AdaRound's optimization objective.
+\subsection{Results}
+\begin{table}[H]
+\centering
+\caption{Metrics from Random Initialization vs. Our Proposed Method}
+\label{tab:adaround_inversion_metrics}
+\begin{tabular}{|l|l|l|l|}
+\hline
+                        & SSIM $\uparrow$       & PSNR $\uparrow$        & NRMSE $\downarrow$    \\ \hline
+Olivetti Faces (Before) & 0.00                  & 3.50                   & 1.16                  \\ \hline
+Olivetti Faces (After)  & \textbf{0.14 (+0.14)} & \textbf{12.83 (+9.33)} & \textbf{0.40 (-0.76)} \\ \hline
+Chest X-Ray (Before)    & 0.00                  & 2.61                   & 1.10                  \\ \hline
+Chest X-Ray (After)     & \textbf{0.07 (+0.07)} & \textbf{10.13 (+7.52)} & \textbf{0.46 (-0.64)} \\ \hline
+Horse DB (Before)       & 0.00                  & 2.60                   & 1.11                  \\ \hline
+Horse DB (After)        & \textbf{0.07 (+0.07)} & \textbf{10.15 (+7.55)} & \textbf{0.47 (-0.64)} \\ \hline
+\end{tabular}
+\end{table}
 
-\begin{algorithm}[H]
-\caption{Gradient-Aware Adaptive Rounding (Finetuning)}\label{alg:gradient_aware_adaround_finetuning}
-\begin{algorithmic}[1]
-\Require $\mathbf{W}$, $X$ (calibration data), $\eta$ (learning rate), $B$ (batch size)
-\Ensure EMA of models during finetuning $W'_{\text{avg}}$
-\State $\mathbf{W}' \gets \mathbf{W}$
-\State $\mathbf{W}'_{\text{avg}} \gets \mathbf{W}$
-\State $N \gets \frac{X}{B}$ \Comment{Number of Iterations}
-\State $\alpha \gets \frac{2}{N+1}$ \Comment{EMA Smoothing Factor}
-\For{each batch $x_b$ in $X$}
-    \State $\hat{x}_b \gets \mathbf{W}'(x_b)$ \Comment{Forward pass}
-    \State $\mathcal{L} \gets \text{CrossEntropyLoss}(\hat{x}_b, x_b)$
-    \State $\mathbf{W}' \gets \mathbf{W}' - \eta \cdot \nabla \mathcal{L}$ \Comment{Backward pass}
-    \State $\mathbf{W}'_{\text{avg}} \gets \alpha \cdot \mathbf{W}'_{\text{avg}} + (1 - \alpha) \cdot \mathbf{W}'$ \Comment{Update EMA}
-\EndFor
-\State \Return $\mathbf{W}'_{\text{avg}}$
-\end{algorithmic}
-\end{algorithm}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{img/adaround_inversion/16acd81804674b3b8d69cbe4807a3e0f-result.png}
+    \caption{Results on Olivetti Faces}
+    \label{fig:adaround_inversion_olivetti}
+\end{figure}
 
-\begin{algorithm}[H]
-\caption{Gradient-Aware Adaptive Rounding (Quantization)}\label{alg:gradient_aware_adaround_quantization}
-\begin{algorithmic}[1]
-\Require $\mathbf{W}$, $\mathbf{W}'_{\text{avg}}$, $X$ (calibration data), $t$ (number of iterations), $b$ (target bit width), $\beta$ (regularization parameter), $\psi$ (BCE loss multiplier)
-\Ensure Quantized model $\mathbf{W}_q$, scales
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{img/adaround_inversion/04a80ceb974248ffb6864725da78e909-result.png}
+    \caption{Results on Chest X-Ray Images (Pneumonia)}
+    \label{fig:adaround_inversion_xray}
+\end{figure}
 
-\State $x_{in} \gets \textsc{CacheActivations}(\mathbf{W}, X)$ \Comment{Forward pass on calibration data to cache input activations}
-\For{$w_j$ in $\mathbf{W}$}
-\State $\mathbf{D} \gets \textsc{Sign}(\mathbf{W}'_{\text{avg}} - \mathbf{W})$
-\State $q_{\text{min}} \gets -2^{b - 1}$
-\State $q_{\text{max}} \gets 2^{b - 1} - 1$
-\State $\text{scales}_j \gets \frac{\max(w_j)}{q_{\text{max}}}$ \Comment{Store scale for output}
-\State $\mathbf{V}_j \gets h^{-1}(w_j - \lfloor w_j \rfloor)$ \Comment{Initialize $\mathbf{V}_j$ so that it corresponds to the fraction of each weight}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{img/adaround_inversion/8bbfd491fcb644dda0d9a7b3db367b66-result.png}
+    \caption{Results on Weizmann Horse Database}
+    \label{fig:adaround_inversion_horse}
+\end{figure}
 
-\For{$i \in \{0 \ldots t\}$}
-\State $\beta \gets \textsc{Anneal}(\beta)$
-\State $\hat{w}_j \gets \text{clamp}\left(\lfloor \frac{w_j}{\text{scales}_j} \rfloor + h(\mathbf{V}_j), q_\text{min}, q_\text{max}\right)$
-\State $\mathcal{L} \gets \underbrace{\psi \cdot \textsc{BCE}(h(\mathbf{V}_j), \mathbf{D})}_{\text{Proposed addition}} + \|w_j x_{in} - \hat{w}_j x_{in}\|_F^2 + \sum_{i, j} \left(1 - \lvert 2h(\mathbf{V}_{i,j}) - 1\rvert^\beta\right)$
-\State $\mathbf{V} \gets \mathbf{V} - \nabla \mathcal{L}$ \Comment{via autograd}
-\EndFor
-\State $\mathbf{W}_{Q_{i, j}} \gets \begin{cases}
-    \lceil w_{i, j} \rceil, &\text{where } h(\mathbf{V}_{i,j}) \geq 0.5 \\
-    \lfloor w_{i, j} \rfloor, &\text{otherwise}
-\end{cases}$ \Comment{Finalize quantization}
-\EndFor
-\State \Return $\mathbf{W}_Q$, scales
-\end{algorithmic}
-\end{algorithm}
+We notice an increase in SSIM and PSNR, and a decrease in Normalized RMSE, implying that the mean of the generated samples resembles the mean of the calibration samples to some extent.
+
+\section{Ablation Study}
+We perform an ablation study by applying our inversion method to round-to-nearest (RTN) quantization. Since RTN does not use calibration data, we compare our method's samples to the mean of the training data instead. We report the same metrics as the main experiment (SSIM, PSNR, and Normalized RMSE) in Table \ref{tab:adaround_inversion_ablation} and a visualization in Figures \ref{fig:olivetti_ablation}, \ref{fig:xray_ablation}, and \ref{fig:horse_ablation}.
+
+\begin{table}[H]
+\centering
+\caption{Results from Ablation Study}
+\label{tab:adaround_inversion_ablation}
+\begin{tabular}{|l|l|l|l|}
+\hline
+ &  SSIM $\uparrow$ & PSNR $\uparrow$ & NRMSE $\downarrow$ \\ \hline
+Olivetti Faces (Before) & 0.00 & 2.89 & 1.12 \\ \hline
+Olivetti Faces (After) & 0.00 & 3.90 (+1.01) & 1.00 (-0.12) \\ \hline
+Chest X-Ray (Before) & 0.00 & 2.77 & 1.11 \\ \hline
+Chest X-Ray (After) & 0.00 & 3.64 (+0.87) & 1.00 (-0.11) \\ \hline
+Horse DB (Before) & 0.00 & 2.57 & 1.10 \\ \hline
+Horse DB (After) & 0.00 & 3.38 (+0.81) & 1.00 (-0.10) \\ \hline
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{img/adaround_inversion/ablation-31bebceaa4bb4cd2b9305c23af7e5d8c-result.png}
+    \caption{Ablation Study Results on Olivetti Faces}
+    \label{fig:olivetti_ablation}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{img/adaround_inversion/ablation-3f5b592012394a26a9ef69d4e24cf68f-result.png}
+    \caption{Ablation Study Results on Chest X-Ray Images (Pneumonia)}
+    \label{fig:xray_ablation}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{img/adaround_inversion/ablation-bdc15cdff0e94745bebd2a5af058167e-result.png}
+    \caption{Ablation Study Results on Weizmann Horse Database}
+    \label{fig:horse_ablation}
+\end{figure}
+
+We notice 0.00 SSIM on all datasets, implying that the generated samples do not look like the calibration data at all.
+
+\section{Discussion}
+\subsection{Main Experiment}
+From the metrics, we observe an increase in SSIM and PSNR, and a decrease in Normalized RMSE after training. In the images, we can see the silhouettes and outlines of the calibration set, although it is quite difficult to make out. From the results, we can conclude that the $\Delta W$ of a model quantized using AdaRound does contain information about the calibration data. 
+
+\subsection{Ablation Study}
+Interestingly, we see a slight improvement in PSNR and NRMSE in the ablation study. However, crucially the SSIM shows that round-to-nearest quantization is not vulnerable to our method. In other words, our method indeed extracts information about the calibration data in data-dependent quantization methods.
+
+\subsection{Overall}
+We demonstrate that AdaRound encodes information from the calibration data into the weight perturbation matrix. By targeting the null space of this matrix, our proposed method generates samples that resembles outlines of the calibration data. While the reconstructed data only represents the mean of the calibration data rather than exact instances, the leakage is significant enough to warrant reconsideration of the security of data-dependent PTQ methods. 
+
+\section{Limitations}
+The most important limitation is the fact that this method only reconstructs representations of the mean of the calibration data, but not individual samples. The low SSIM ($\sim0.14$) is another limitation: this method only shows evidence for the leakage channel but the quality may be improved. For future work, it is possible to consider adding Total Variation (TV) loss~\cite{rudinNonlinearTotalVariation1992}, or using a prior such as a deep image prior~\cite{ulyanovDeepImagePrior2020}, to improve the quality of the reconstructed samples.
 
 \end{document}

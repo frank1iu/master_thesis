@@ -1,0 +1,132 @@
+% !TEX root = ../main.tex
+\providecommand{\main}{..}
+\documentclass[../main.tex]{subfiles}
+
+\begin{document}
+\chapter{Gradient-Aware Adaptive Rounding} \label{chap:gradient_aware_adaround}
+In this chapter, we propose and evaluate a gradient-aware adaptive rounding method.
+
+\section{Method}
+To reconcile AdaRound's assumption that the gradient term in Equation \ref{eq:adaround_taylor_expansion} can be ignored, and Central Flows' evidence that the gradient is nonzero even for pretrained converged models, we propose a modified version of AdaRound to incorporate awareness of the local gradient.
+
+In order to minimize
+\begin{align}
+    \mathbb{E} \left[ g^{(w)^T} \Delta W \right],
+\end{align}
+we can attempt to force $\Delta W$ to have the same sign as $-g^{(w)^T}$. We approximate this by finetuning a model on a small amount of training data, and compute the Exponential Moving Average (EMA) of the model during each iteration. We then use $\text{sign}(W'_{\text{avg}} - W)$, the sign of the difference between the weights before and after finetuning, as a proxy to $-\text{sign}\left(g^{(w)^T}\right)$. Finally, we add the Binary Cross Entropy (BCE) between the current rounding directions and $\text{sign}(W'_{\text{avg}} - W)$ as a penalty term to AdaRound's optimization objective.
+
+\begin{algorithm}[H]
+\caption{Gradient-Aware Adaptive Rounding (Finetuning)}\label{alg:gradient_aware_adaround_finetuning}
+\begin{algorithmic}[1]
+\Require $\mathbf{W}$, $X$ (calibration data), $\eta$ (learning rate), $B$ (batch size)
+\Ensure EMA of models during finetuning $W'_{\text{avg}}$
+\State $\mathbf{W}' \gets \mathbf{W}$
+\State $\mathbf{W}'_{\text{avg}} \gets \mathbf{W}$
+\State $N \gets \frac{X}{B}$ \Comment{Number of Iterations}
+\State $\alpha \gets \frac{2}{N+1}$ \Comment{EMA Smoothing Factor}
+\For{each batch $x_b$ in $X$}
+    \State $\hat{x}_b \gets \mathbf{W}'(x_b)$ \Comment{Forward pass}
+    \State $\mathcal{L} \gets \text{CrossEntropyLoss}(\hat{x}_b, x_b)$
+    \State $\mathbf{W}' \gets \mathbf{W}' - \eta \cdot \nabla \mathcal{L}$ \Comment{Backward pass}
+    \State $\mathbf{W}'_{\text{avg}} \gets \alpha \cdot \mathbf{W}'_{\text{avg}} + (1 - \alpha) \cdot \mathbf{W}'$ \Comment{Update EMA}
+\EndFor
+\State \Return $\mathbf{W}'_{\text{avg}}$
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{Gradient-Aware Adaptive Rounding (Quantization)}\label{alg:gradient_aware_adaround_quantization}
+\begin{algorithmic}[1]
+\Require $\mathbf{W}$, $\mathbf{W}'_{\text{avg}}$, $X$ (calibration data), $t$ (number of iterations), $b$ (target bit width), $\beta$ (regularization parameter), $\psi$ (BCE loss multiplier)
+\Ensure Quantized model $\mathbf{W}_q$, scales
+
+\State $x_{in} \gets \textsc{CacheActivations}(\mathbf{W}, X)$ \Comment{Forward pass on calibration data to cache input activations}
+\For{$w_j$ in $\mathbf{W}$}
+\State $\mathbf{D} \gets \textsc{Sign}(\mathbf{W}'_{\text{avg}} - \mathbf{W})$
+\State $q_{\text{min}} \gets -2^{b - 1}$
+\State $q_{\text{max}} \gets 2^{b - 1} - 1$
+\State $\text{scales}_j \gets \frac{\max(w_j)}{q_{\text{max}}}$ \Comment{Store scale for output}
+\State $\mathbf{V}_j \gets h^{-1}(w_j - \lfloor w_j \rfloor)$ \Comment{Initialize $\mathbf{V}_j$ so that it corresponds to the fraction of each weight}
+
+\For{$i \in \{0 \ldots t\}$}
+\State $\beta \gets \textsc{Anneal}(\beta)$
+\State $\hat{w}_j \gets \text{clamp}\left(\lfloor \frac{w_j}{\text{scales}_j} \rfloor + h(\mathbf{V}_j), q_\text{min}, q_\text{max}\right)$
+\State $\mathcal{L} \gets \underbrace{\psi \cdot \textsc{BCE}(h(\mathbf{V}_j), \mathbf{D})}_{\text{Proposed addition}} + \|w_j x_{in} - \hat{w}_j x_{in}\|_F^2 + \sum_{i, j} \left(1 - \lvert 2h(\mathbf{V}_{i,j}) - 1\rvert^\beta\right)$
+\State $\mathbf{V} \gets \mathbf{V} - \nabla \mathcal{L}$ \Comment{via autograd}
+\EndFor
+\State $\mathbf{W}_{Q_{i, j}} \gets \begin{cases}
+    \lceil w_{i, j} \rceil, &\text{where } h(\mathbf{V}_{i,j}) \geq 0.5 \\
+    \lfloor w_{i, j} \rfloor, &\text{otherwise}
+\end{cases}$ \Comment{Finalize quantization}
+\EndFor
+\State \Return $\mathbf{W}_Q$, scales
+\end{algorithmic}
+\end{algorithm}
+
+\section{Experiment Setup}
+We evaluate the proposed method on the same computer as described in Section \ref{sec:adaround_inversion_experiment_setup}. We report the perplexity of our two language models (TinyStories v1 and TinyStories v2) in Table \ref{tab:gradient_aware_adaround_results}. 
+
+\section{Results}
+We observe neutral to negative results using the proposed method. It is important to note that the two models had different testing data (TinyStories v1 and TinyStories v2, respectively).
+
+\begin{table}[H]
+\centering
+\caption{Perplexity Evaluation of Proposed Method}
+\label{tab:gradient_aware_adaround_results}
+\begin{tabular}{|l|l|l|}
+\hline
+Type of Quantization & TinyStories V1   & TinyStories V2  \\ \hline
+None (Unquantized Model)          & 11.9006          & 8.0994          \\ \hline \hline
+Round-to-Nearest     & 11.9219          & 8.1224          \\ \hline
+AdaRound             & \textbf{11.9216}          & \textbf{8.1176} \\ \hline
+Proposed Method      & \textbf{11.9216} & 8.1207          \\ \hline
+\end{tabular}
+\end{table}
+
+\section{Ablation Study}
+We report an ablation study by ablating two possible elements of the proposed method: AdaRound and EMA. Ablating EMA means we use final finetuned model weights instead of the EMA of model weights during all iterations. Ablating AdaRound means we steer the rounding using only the sign of the weight perturbation matrix, as described in Algorithm \ref{alg:ablate_adaround}.
+
+\begin{table}[H]
+\centering
+\caption{Perplexity Evaluation of Ablation Study}
+\label{tab:adaround_ablation_study}
+\begin{tabular}{|c|c|l|l|}
+\hline
+AdaRound with BCE Loss & EMA          & TinyStories V1 & TinyStories V2  \\ \hline
+$\checkmark$ & $\checkmark$ & 11.9216        & 8.1207          \\ \hline
+$\checkmark$ & $\times$     & 11.9216        & 8.1179          \\ \hline
+$\times$     & $\checkmark$ & 11.9166        & 8.1546          \\ \hline
+$\times$     & $\times$     & \textbf{11.9050}        & \textbf{8.1084} \\ \hline
+\end{tabular}
+\end{table}
+
+\begin{algorithm}[H]
+\caption{Gradient-based Steering without AdaRound}\label{alg:ablate_adaround}
+\begin{algorithmic}[1]
+\Require $\mathbf{W}$ (unquantized weights), $\mathbf{W}'$ (calibration model), $b$ (target bit width)
+\Ensure Quantized model $\mathbf{W}_q$
+\Function{CustomRound}{$\mathbf{W}$, $\mathbf{W}'$}
+  \State $\mathbf{W}_{i,j} \gets \begin{cases}
+    \lceil \mathbf{W}_{i, j} \rceil, &\text{where } \mathbf{W}_{i, j} < \mathbf{W}'_{i, j} \\
+    \lfloor \mathbf{W}_{i, j} \rfloor, &\text{otherwise}
+\end{cases}$
+  \State \Return $\mathbf{W}$
+\EndFunction
+\State $q_{\text{min}} \gets -2^{b - 1}$
+\State $q_{\text{max}} \gets 2^{b - 1} - 1$
+\State $\text{scale} \gets \frac{\max(\mathbf{W})}{q_{\text{max}}}$
+\State $\mathbf{W}_q \gets \text{clamp}\left(\textsc{CustomRound}(\frac{\mathbf{W}}{\text{scale}}), q_\text{min}, q_\text{max}\right)$
+\State \Return $\mathbf{W}_q$, scale
+\end{algorithmic}
+\end{algorithm}
+
+\section{Discussion}
+First, we notice neutral to negative results in the main experiment. While the central flows paper does suggest non-zero gradients even for pretrained converged models, adding this signal to the rounding did not result in a meaningful improvement.
+
+We also notice that in our ablation study, we achieved the best performance by ablating both EMA and AdaRound (outperforming original AdaRound). This method steers the model during rounding in the direction to a finetuned model directly, and this ablation study shows that this direction can still potentially be useful despite the neutral to negative results in the main experiment. For example, it is possible that the EMA averaging smoothed out important signals, or BCE loss was not optimal for steering the model during rounding.
+
+However, it is also possible that while the gradient is non-zero, the assertion that it is zero is simply ``good enough'' for the search of the optimal rounding direction.
+
+Finally, it might be possible to consider a better proxy than the direction towards a finetuned model, as this is dependent on the finetuning hyperparameters (learning rate, step count, etc.).
+
+\end{document}
