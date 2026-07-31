@@ -9,7 +9,7 @@ Abstract in Japanese should be written here.
 \end{eabstract}
 
 \begin{abstract}
- 300 words abstract in English should be written here. 
+The recent exponential scaling of Large Language Models (LLMs) has resulted in massive carbon emissions and significant challenges in deployment, forcing users to rely on third-party cloud providers, thereby raising privacy concerns. This highlights the necessity of model compression, and post-training quantization (PTQ) is one method that enables efficient on-device models. AdaRound, an adaptive rounding method that outperforms round-to-nearest rounding during quantization, minimizes the task loss between the original weights and the quantized weights on unlabelled calibration data. We find that: 1) AdaRound leaks some information about its calibration data into the weight perturbation matrix, and we demonstrate this by proposing a novel inversion attack that targets the null space of this matrix to recover coarse representations of the original data. 2) The theoretical foundation of AdaRound asserts that the gradient of the loss function is zero for pretrained converged models, an assumption which is refuted by recent literature. To address this discrepancy, we attempted to reconcile this by incorporating local gradient signals into the AdaRound optimization process, but obtained neutral results on empirical evaluations. Therefore, this thesis highlights a frequently overlooked dimension in PTQ (privacy), and proposes a gradient-aware modification of AdaRound to better align the method with modern literature.
 \end{abstract}
 
 \end{document}
