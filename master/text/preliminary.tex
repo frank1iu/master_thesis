@@ -373,8 +373,5 @@ We observe from Figure \ref{fig:loss_towards} that even though the magnitude of 
 \todo{Consider adding an experiment: loss when moving towards the direction of the gradient}
 
 \subsection{Discussion}
-The key insight from this experiment is the fact that
-
-\todo{Write how some directions are better than others, and worst directions cause significant degradation}
-
+The key insight from this experiment is the fact that when weights of a model is perturbed, the loss does not degrade uniformly. And there exists directions of perturbation that result in massive loss increases, which outlines the potential need for opimizing the direction of rounding in post-training quantization.
 \end{document}

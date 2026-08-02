@@ -61,6 +61,23 @@ A simple optimization can therefore be made by computing the Gram matrix $G = \D
 \section{Experiment Setup} \label{sec:adaround_inversion_experiment_setup}
 We trained MLPs on these datasets: Olivetti Faces~\cite{JMLR:v12:pedregosa11a}, Chest X-Ray Images (Pneumonia)~\cite{kermanyIdentifyingMedicalDiagnoses2018}, and the Weizmann Horse Database~\cite{weizmannHorseDB}, on a single computer (CPU: Intel Xeon w9-3495X, GPU: 1x NVIDIA GeForce RTX 4090). We perform 500 iterations of AdaRound quantization using the Adam optimizer, then obtain $\Delta W$, the difference between the quantized and the original model. For each model, we generate 10 random samples from a Gaussian distribution, then train for 3000 iterations using the Adam optimizer. We report the SSIM (Structural Similarity Index Measure), PSNR (Peak Signal-to-Noise ratio), and Normalized RMSE (Root Mean Squared Error) between the mean of the calibration data and the mean of 10 generated samples before and after our inversion method in Table \ref{tab:adaround_inversion_metrics}. We also report a visualization of the mean calibration sample vs. the mean generated sample in Figures \ref{fig:adaround_inversion_olivetti}, \ref{fig:adaround_inversion_xray}, and \ref{fig:adaround_inversion_horse}.
 
+Our implementation details are described in Table \ref{tab:implementation_detail}.
+
+\begin{table}[H]
+\centering
+\caption{Implementation Details}
+\label{tab:implementation_detail}
+\begin{tabular}{ll}
+\hline
+\textbf{Hyperparameter/Component} & \textbf{Value} \\ \hline
+Number of Iterations & 3000 \\
+Learning Rate & 0.05 \\
+Optimizer & Adam~\cite{kingmaAdamMethodStochastic2017a} \\
+Learning Rate Scheduler & CosineAnnealingLR~\cite{loshchilovSGDRStochasticGradient2017} \\
+\hline
+\end{tabular}
+\end{table}
+
 \subsection{Results}
 \begin{table}[H]
 \centering

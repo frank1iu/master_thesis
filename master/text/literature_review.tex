@@ -59,8 +59,8 @@ The above problem is NP-hard. To solve this efficiently, AdaRound uses the local
 
 \todo{Derivation}
 
-\begin{align}
-\arg\min_{\mathbf{V}} \|\mathbf{W}x - \hat{\mathbf{W}}x\|_F^2 + f_\text{reg}(\mathbf{V})
+\begin{align} \label{eq:adaround_objective}
+\arg\min_{\mathbf{V}} \left( \|\mathbf{W}x - \hat{\mathbf{W}}x\|_F^2 + f_\text{reg}(\mathbf{V}) \right)
 \end{align}
 
 The regularizer uses an annealed parameter $\beta$ and is defined as follows.
