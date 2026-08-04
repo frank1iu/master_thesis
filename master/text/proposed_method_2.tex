@@ -103,8 +103,8 @@ We observe neutral to negative results using the proposed method. It is importan
 Type of Quantization & TinyStories V1   & TinyStories V2  \\ \hline
 None (Unquantized Model)          & 11.9006          & 8.0994          \\ \hline \hline
 Round-to-Nearest     & 11.9219          & 8.1224          \\ \hline
-AdaRound             & \textbf{11.9216}          & \textbf{8.1176} \\ \hline
-Proposed Method      & \textbf{11.9216} & 8.1207          \\ \hline
+AdaRound             & \textbf{11.9216}          & \textbf{8.1177} \\ \hline
+Proposed Method      & \textbf{11.9216} & 8.1179          \\ \hline
 \end{tabular}
 \end{table}
 
@@ -113,15 +113,15 @@ We report an ablation study by ablating two possible elements of the proposed me
 
 \begin{table}[H]
 \centering
-\caption{Perplexity Evaluation of Ablation Study}
+\caption{Perplexity Evaluation of Ablation Studies}
 \label{tab:adaround_ablation_study}
-\begin{tabular}{|c|c|l|l|}
+\begin{tabular}{|c|c|c|l|l|}
 \hline
-AdaRound with BCE Loss & EMA          & TinyStories V1 & TinyStories V2  \\ \hline
-$\checkmark$ & $\checkmark$ & 11.9216        & 8.1207          \\ \hline
-$\checkmark$ & $\times$     & 11.9216        & 8.1179          \\ \hline
-$\times$     & $\checkmark$ & 11.9166        & 8.1546          \\ \hline
-$\times$     & $\times$     & \textbf{11.9050}        & \textbf{8.1084} \\ \hline
+& AdaRound + BCE & EMA          & TinyStories V1 & TinyStories V2  \\ \hline
+Main Experiment & $\checkmark$ & $\checkmark$ & 11.9216        & 8.1179          \\ \hline
+Ablation 1 & $\checkmark$ & $\times$     & 11.9216        & 8.1197          \\ \hline
+Ablation 2 & $\times$     & $\checkmark$ & 11.9166        & 8.1546          \\ \hline
+Ablation 3 & $\times$     & $\times$     & \textbf{11.9050}        & \textbf{8.1084} \\ \hline
 \end{tabular}
 \end{table}
 
