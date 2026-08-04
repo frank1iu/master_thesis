@@ -16,7 +16,7 @@ After optimization, we expect the following.
 \|\Delta W x\|_F^2 \approx 0 \iff \Delta W x \approx 0
 \end{align}
 
-We notice that $x \subset \mathcal{N}(\Delta W)$. In other words, the training data $x$ used to calibrate the AdaRound process lies within the null space of the weight perturbation matrix $\Delta W$. 
+We notice that $\Delta W x = 0 \implies x \in \mathcal{N}(\Delta W)$. Therefore, the training data $x$ used to calibrate the AdaRound process approximately lies within the null space of the weight perturbation matrix $\Delta W$. 
 
 \section{Method}
 An attacker with access to the original weights $W$ and the quantized weights $\hat{W}$ can generate a sample $\hat{x}$ that lies within this null space. We can initialize a $\hat{x}$ from random noise and apply Stochastic Gradient Descent with the objective $\arg\min_{\hat{x}} \|\Delta W \hat{x}\|_2^2$, as described in Algorithm \ref{alg:inversion}.
