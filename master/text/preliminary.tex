@@ -51,8 +51,23 @@ U(W) &:= \frac{\hat{H}(W)}{b}
 
 Note that $U \in [0, 1]$, and $U = 1$ implies the model is nearly incompressible losslessly, while $U < 1$ implies the model can be losslessly compressed to $1 - U$ times its current size. For example, if $U = 0.5$, the model can be compressed to half its size with neglibile information loss.
 
-Qwen 3~\cite{yangQwen3TechnicalReport2025b} is a state-of-the-art language model in various sizes. Now that we have a method to quantify the compressibility of models, let us evaluate the compressibility of the 4B model, which is provided in three data types, of widths 16, 8, and 4. We report the results in Table \ref{tab:qwen3_entropy}.
-\todo{Consider reproducing with more models}
+We now have a method to quantify the compressibility of models. We use it to evaluate several language models, and report the result in Table \ref{tab:bf16_entropy}.
+
+\begin{table}[H]
+\centering
+\caption{Entropy Estimate of Language Models (bfloat16)}
+\label{tab:bf16_entropy}
+\begin{tabular}{|c|c|c|}
+ \hline
+    Model & $\hat{H}(W)$ in bits & $U(W)$ \\ \hline
+    Qwen 3 4B~\cite{yangQwen3TechnicalReport2025b} & 10.58 & $10.58/16\approx66\%$ \\ \hline
+    Qwen 3.5 4B~\cite{teamQwen35AcceleratingProductivity2026} & 10.56 &  $10.56/16\approx66\%$ \\ \hline
+    Gemma 4 12B Instruct~\cite{teamGemma4Technical2026}& 10.69 & $10.69/16\approx67\%$ \\ \hline
+    GLM 4.7 Flash~\cite{z.aiinc.GLM47AdvancingCoding2025} (30B)& 10.49 & $10.49/16\approx\%66$ \\ \hline
+\end{tabular}
+\end{table}
+ 
+Interestingly, most of these models use around $\frac23$ of their capacity. Let us investigate further on Qwen 3 4B. The model is provided in three data types (bfloat16, fp8, int4), and we use the same method to evaluate their compressibility. We report the results in Table \ref{tab:qwen3_entropy}.
 
 \begin{table}[H]
 \centering
@@ -68,8 +83,6 @@ Qwen 3~\cite{yangQwen3TechnicalReport2025b} is a state-of-the-art language model
 \end{table}
 
 We observe that the bfloat16 model, which is $\sim8$ GB on disk, only uses $\sim\frac23$ of its capacity. This implies that the model can be compressed to $\sim5.33$ GB with negligible information loss. This degree of compressibility motivates us to perform an investigation of the distribution of the weights by plotting their possible values against the probabilities of each value, which we report in Figures \ref{fig:qwen3_4b_bf16}, \ref{fig:qwen3_4b_fp8}, and \ref{fig:qwen3_4b_int4}.
-
-\todo{No axis labels (need to rerun the code to add them)}
 
 \begin{figure}[H]
     \centering
@@ -154,7 +167,21 @@ Then the perplexity of the model on the text is the following.
 Intuitively, perplexity is a measure of how surprised or confused a model is when seeing a certain text. We compute the model's perplexity over its validation data, then use the result as a metric to evaluate the model's accuracy (lower is better).
 
 \subsection{Evaluation: Results and Discussion}
-We report the validation perplexity of our two models. Note that the original paper only provided models trained on TinyStories v1.
+For qualitative evaluation, we report sample outputs from our models on the prompt \verb|"Once upon a time, "|.
+
+\begin{minipage}[t]{0.48\textwidth}
+TinyStories V1 Model: \\
+{\small Once upon a time, there lived a little girl named Lily. Lily loved to play outside with her friends. One day, Lily saw a big pile of candy in the garden. She wanted to play too, but she wanted to play too. \\ Lily went to her mom and said, ``I want to play with my candy!'' They both felt scared and didn't want to play with her friends. So, they both went to get their candy. They had so much fun to play together and splashed until they got lost. They both had a great time playing together. They played together and had lots of fun.}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.48\textwidth}
+TinyStories V2 Model: \\ 
+{\small Once upon a time, there was a little girl named Mia. Mia liked to play with her ball. She would throw it in the air and catch it. Mia was very happy. One day, Mia found a big box of balls on the ground. She picked it up and put it in the box. She picked it up and put it in the box. Mia put the ball back in the box and put it back on the ball. She was so happy! She played with the ball all day.}
+\end{minipage}
+
+\vspace{2em}
+
+For quantitative evaluation, we report the validation perplexity of our two models. Note that the original paper only provided models trained on TinyStories v1.
 
 \begin{table}[H]
 \centering
@@ -172,8 +199,6 @@ Perplexity $\downarrow$ (TinyStories v1) & \multicolumn{1}{c|}{19.3919} & \textb
 Perplexity $\downarrow$ (TinyStories v2)& \multicolumn{1}{c|}{---}              & ---                   & 8.0994                \\ \hline
 \end{tabular}
 \end{table}
-
-\todo{Add qualitative results (actual model outputs) here}
 
 We observe that our model results in better perplexity than the reference model despite being much smaller. In \verb|float32|, each weight is 4 bytes, so our TinyStories v1 model with 0.57M parameters is expected to take only $\sim2.17$MiB of disk space (the actual disk space, including the model's configuration, is $\sim2.22$MiB). Models of this scale can be suitable for devices with extremely low compute and/or memory.
 
