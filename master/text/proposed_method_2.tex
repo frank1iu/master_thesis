@@ -69,8 +69,11 @@ In other words, this is essentially a modification to AdaRound's objective in Eq
 \end{algorithmic}
 \end{algorithm}
 
-\section{Experiment Setup}
-We evaluate the proposed method on the same computer as described in Section \ref{sec:adaround_inversion_experiment_setup}. We report implementation details for such as our hyperparameters in Table \ref{tab:implementation_detail_2} (note that they are the same for TinyStories v1 and TinyStories v2). We report the perplexity of our two language models (TinyStories v1 and TinyStories v2) in Table \ref{tab:gradient_aware_adaround_results}. 
+\section{Evaluation}
+In order to evaluate whether incorporating local gradient information can improve AdaRound quantization, we evaluate our proposed method on our two language models from Section \ref{sec:slms}, and used perplexity as a metric to the models' accuracy.
+
+\subsection{Experiment Setup}
+We evaluate the proposed method on the same computing environment as described in Section \ref{sec:adaround_inversion_experiment_setup}. We report implementation details for such as our hyperparameters in Table \ref{tab:implementation_detail_2} (note that they are the same for TinyStories v1 and TinyStories v2). We report the perplexity of our two language models (TinyStories v1 and TinyStories v2) in Table \ref{tab:gradient_aware_adaround_results}. 
 
 \begin{table}[H]
 \centering
@@ -88,7 +91,7 @@ $\psi$ & 100.0 \\
 \end{tabular}
 \end{table}
 
-\section{Results}
+\subsection{Results}
 We observe neutral to negative results using the proposed method. It is important to note that the two models had different testing data (TinyStories v1 and TinyStories v2, respectively).
 
 \begin{table}[H]
