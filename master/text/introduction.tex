@@ -1,13 +1,31 @@
 % !TEX root = ../main.tex
 \providecommand{\main}{..}
 \documentclass[../main.tex]{subfiles}
+% order:
+% 1.1. Background (The exponential scaling of LLMs...)
+%      + Classical Perspective, Modern Perspective
+% 1.2. Purpose
+% 1.3. Contributions
 
 \begin{document}
 \chapter{Introduction} \label{chap:intro}
 
 \section{Background}
 
-\subsection{Bias-Variance Tradeoff and Scaling Laws}
+Recently, the exponential scaling of LLM sizes (as shown in Figure \ref{fig:gerstmayr_llm_scaling}) has inadvertently resulted in models that are extremely challenging to deploy, thus causing users to rely on third-party providers for LLM usage. This resulted in the effects including but not limited to the following.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{img/intro/gerstmayr_llm_scaling.png}
+    \caption{Observed exponential scaling of LLM sizes over time~\cite{gerstmayrMultibodyModelsGenerated2024} (Note: The GPT-4 figure is an estimate)}
+    \label{fig:gerstmayr_llm_scaling}
+\end{figure}
+
+\paragraph{Environmental Effects.} $\text{CO}_2$-equivalent emissions ($\text{CO}_2e$) seems to also grow over time. GPT-3's training had an estimated $\text{CO}_2e$ of $\sim$552.1 tons~\cite{pattersonCarbonEmissionsLarge2021}, GPT-4's training had an estimated $\text{CO}_2e$ of $\sim$6912 tons~\cite{kausarQuantifyingClimateRisk2026}, and Llama 3.3~\cite{grattafioriLlama3Herd2024c}'s training had an estimated $\text{CO}_2e$ of $\sim$11,390 tons. Even worse, it is shown that an LLM incurs ``significantly higher carbon emissions'' during inference than training~\cite{fuLLMCO2AdvancingAccurate2025}.
+\paragraph{Cost.} As LLMs scale exponentially, inference costs also become expensive. For example, OpenAI o1~\cite{openaiOpenAIO1System2026} in ``pro mode'' costs \$150 per 1 million tokens input, and \$600 per 1 million tokens output. We see evidence of heavy AI cost burden in companies: Uber's yearly AI budget was exhausted in 4 months, while Microsoft began cancelling Claude Code licenses just 6 months after acquiring them~\cite{jakeUberBurnedIts}.
+\paragraph{Reliability.} Using third-party providers can cause a single point of failure, and an outage can have severe effects on mission-critical tasks. For example, it is observed that whenever ChatGPT has an outage, stock trading volume goes down~\cite{chengDoesGenerativeAI2025}.
+
+To further understand why simple scaling seems to improve model accuracy with little drawback, let us examine the clash between the classical Bias-Variance Tradeoff and the modern Scaling Laws.
 
 \subsubsection{Classical Perspective}
 Consider a classifier over $k \in \{1, 2, \dots K\}$, trained with Mean Squared Error loss. Its test error is often attributed to the following three sources~\cite{gemanNeuralNetworksBias1992}.
@@ -58,24 +76,8 @@ When originally proposed in 2019, this phenomenon was empirically validated on n
     \label{fig:anthropic_scaling_laws}
 \end{figure}
 
-Seemingly, simply adding more training data and parameters allows one to create better language models. This phenomenon has lead to an exponential scaling of LLM parameter counts, as surveyed in Figure \ref{fig:gerstmayr_llm_scaling}.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.6\textwidth]{img/intro/gerstmayr_llm_scaling.png}
-    \caption{Observed exponential scaling of LLM sizes over time~\cite{gerstmayrMultibodyModelsGenerated2024} (Note: The GPT-4 figure is an estimate)}
-    \label{fig:gerstmayr_llm_scaling}
-\end{figure}
-
-\section{Motivation}
-The exponential scaling of LLM sizes has inadvertently resulted in models that are extremely challenging to deploy, thus causing users to rely on third-party providers for LLM usage. This resulted in the following effects.
-
-\paragraph{Environmental Effects.} $\text{CO}_2$-equivalent emissions ($\text{CO}_2e$) seems to also grow over time. GPT-3's training had an estimated $\text{CO}_2e$ of $\sim$552.1 tons~\cite{pattersonCarbonEmissionsLarge2021}, GPT-4's training had an estimated $\text{CO}_2e$ of $\sim$6912 tons~\cite{kausarQuantifyingClimateRisk2026}, and Llama 3.3~\cite{grattafioriLlama3Herd2024c}'s training had an estimated $\text{CO}_2e$ of $\sim$11,390 tons. Even worse, it is shown that an LLM incurs ``significantly higher carbon emissions'' during inference than training~\cite{fuLLMCO2AdvancingAccurate2025}.
-\paragraph{Cost.} As LLMs scale exponentially, inference costs also become expensive. For example, OpenAI o1~\cite{openaiOpenAIO1System2026} in ``pro mode'' costs \$150 per 1 million tokens input, and \$600 per 1 million tokens output. We see evidence of heavy AI cost burden in companies: Uber's yearly AI budget was exhausted in 4 months, while Microsoft began cancelling Claude Code licenses just 6 months after acquiring them~\cite{jakeUberBurnedIts}.
-\paragraph{Reliability.} Using third-party providers can cause a single point of failure, and an outage can have severe effects on mission-critical tasks. For example, it is observed that whenever ChatGPT has an outage, stock trading volume goes down~\cite{chengDoesGenerativeAI2025}.
-
 \section{Purpose}
-Therefore, we observe an important need for efficient language models that can be run on-device, which provides benefits such as the following.
+Given the recent exponential scaling of LLMs, we observe an important need for efficient language models that can be run on-device, which provides benefits such as the following.
 
 \paragraph{Privacy.} Data stays on the device and is not transmitted to a remote server. For regulated areas like medical, legal, or financial data, this can be a requirement.
 \paragraph{Robustness.} Even without Internet connection, on-device models can still function. This is suitable for deployment scenarios with little or no internet access (e.g. robotics or drones in remote environments), and mission-critical cases that need to function even during an internet outage.
