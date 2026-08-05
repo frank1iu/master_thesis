@@ -171,7 +171,7 @@ Interestingly, we see a slight improvement in PSNR and NRMSE in the ablation stu
 \subsection{Overall}
 We demonstrate that AdaRound encodes information from the calibration data into the weight perturbation matrix. By targeting the null space of this matrix, our proposed method generates samples that resembles outlines of the calibration data. While the reconstructed data only represents the mean of the calibration data rather than exact instances, the leakage is significant enough to warrant reconsideration of the security of data-dependent PTQ methods. 
 
-\section{Limitations}
+\subsection{Limitations}
 The most important limitation is the fact that this method only reconstructs representations of the mean of the calibration data, but not individual samples. The low SSIM ($\sim0.14$) is another limitation: this method only shows evidence for the leakage channel but the quality may be improved. For future work, it is possible to consider adding Total Variation (TV) loss~\cite{rudinNonlinearTotalVariation1992}, or using a prior such as a deep image prior~\cite{ulyanovDeepImagePrior2020}, to improve the quality of the reconstructed samples.
 
 \end{document}
