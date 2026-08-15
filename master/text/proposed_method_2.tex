@@ -61,8 +61,8 @@ In other words, this is essentially a modification to AdaRound's objective in Eq
 \State $\mathbf{V} \gets \mathbf{V} - \nabla \mathcal{L}$ \Comment{via autograd}
 \EndFor
 \State $\mathbf{W}_{Q_{i, j}} \gets \begin{cases}
-    \lceil w_{i, j} \rceil, &\text{where } h(\mathbf{V}_{i,j}) \geq 0.5 \\
-    \lfloor w_{i, j} \rfloor, &\text{otherwise}
+    \lceil \frac{w_{i, j}}{\text{scales}_j} \rceil, &\text{where } h(\mathbf{V}_{i,j}) \geq 0.5 \\
+    \lfloor \frac{w_{i, j}}{\text{scales}_j} \rfloor, &\text{otherwise}
 \end{cases}$ \Comment{Finalize quantization}
 \EndFor
 \State \Return $\mathbf{W}_Q$, scales
