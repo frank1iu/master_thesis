@@ -1,0 +1,287 @@
+\documentclass{beamer}
+% note to self:
+% to auto-compile thesis, set default recipe to "latexmk (latexmkrc)"
+% to auto-compile defense, set default recipe to "latexmk"
+\usepackage[square,numbers]{natbib}
+\usepackage{algorithm, algpseudocode}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\bibliographystyle{ieeetr}
+%\usefonttheme{serif}
+\setbeamertemplate{navigation symbols}{}
+\addtobeamertemplate{navigation symbols}{}{%
+\usebeamerfont{footline}%
+\usebeamercolor[fg]{footline}%
+\insertframenumber/\inserttotalframenumber
+}
+\setbeamertemplate{section in toc}[sections numbered]
+\AtBeginSection[ ]
+{
+\begin{frame}
+\tableofcontents[currentsection]
+\end{frame}
+}
+
+\begin{document}
+\title{Gradient-Aware Adaptive Rounding for Post-Training Quantization of \\ Deep Neural Networks \vspace{-1.5em}}
+\author{48246347 Piye Liu \\ Supervisor: Prof. Hiroshi Nakamura}
+\date{}
+
+\frame{\vspace{-2em} \titlepage \vspace{-4em} \scriptsize 
+The recent exponential scaling of Large Language Models (LLMs) has resulted in massive carbon emissions and significant challenges in deployment, forcing users to rely on third-party cloud providers, thereby raising privacy concerns. This highlights the necessity of model compression, and post-training quantization (PTQ) is one method that enables efficient on-device models. AdaRound, an adaptive rounding method that outperforms round-to-nearest rounding during quantization, minimizes the task loss between the original weights and the quantized weights on unlabelled calibration data. We find that: 1) AdaRound leaks some information about its calibration data into the weight perturbation matrix, and we demonstrate this by proposing a novel inversion attack that targets the null space of this matrix to recover coarse representations of the original data. 2) The theoretical foundation of AdaRound asserts that the gradient of the loss function is zero for pretrained converged models, an assumption which is refuted by recent literature. To address this discrepancy, we attempted to reconcile this by incorporating local gradient signals into the AdaRound optimization process, but obtained neutral results on empirical evaluations. Therefore, this thesis highlights a frequently overlooked dimension in PTQ (privacy), and proposes a gradient-aware modification of AdaRound to better align the method with modern literature.
+}
+
+\begin{frame}{Outline}
+\tableofcontents
+\end{frame}
+
+\section{Motivation}
+\begin{frame}{Exponential Scaling of LLMs}
+  Recently, the exponential scaling of LLM sizes has inadvertently resulted in models that are extremely challenging to deploy, thus causing users to rely on third-party providers for LLM usage.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{img/intro/gerstmayr_llm_scaling.png}
+    \caption{Observed exponential scaling of LLM sizes over time~\cite{gerstmayrMultibodyModelsGenerated2024} (Note: The GPT-4 figure is an estimate)}
+    \label{fig:gerstmayr_llm_scaling}
+\end{figure}
+\end{frame}
+\begin{frame}{Why Compress LLMs?}
+  \begin{itemize}
+    \item Environmental Effects:  GPT-3's training had an estimated $\text{CO}_2e$ of $\sim$552.1 tons~\cite{pattersonCarbonEmissionsLarge2021}, GPT-4's training had an estimated $\text{CO}_2e$ of $\sim$6912 tons~\cite{kausarQuantifyingClimateRisk2026}, and Llama 3.3~\cite{grattafioriLlama3Herd2024c}'s training had an estimated $\text{CO}_2e$ of $\sim$11,390 tons.
+    \item Cost: For example, OpenAI o1~\cite{openaiOpenAIO1System2026} in ``pro mode'' costs \$150 per 1 million tokens input, and \$600 per 1 million tokens output. Uber's yearly AI budget was exhausted in 4 months, while Microsoft began cancelling Claude Code licenses just 6 months after acquiring them~\cite{jakeUberBurnedIts}.
+    \item Reliability. Single point of failure, and an outage can have severe effects on mission-critical tasks. For example, it is observed that whenever ChatGPT has an outage, stock trading volume goes down~\cite{chengDoesGenerativeAI2025}.
+  \end{itemize}
+\end{frame}
+\begin{frame}{Benefits of On-Device Inference}
+  \begin{itemize}
+    \item Privacy: Data does not need to leave the device
+    \item Robustness: Can function even without internet access
+    \item Latency: Doesn't have to rely on third-party scheduling, can prioritize urgent tasks
+    \item Cost: Reduces API fees, network costs, and even environmental emissions
+  \end{itemize}
+\end{frame}
+\begin{frame}{Model Compression Methods}
+  Methods typically used for the compression of deep neural networks:
+  \begin{itemize}
+    \item Weight Pruning: Setting some weights to zeroes, resulting in sparse weight matrices~\cite{wangStructuredPruningLarge2020a}.
+    \item Knowledge Distillation: Smaller model learns to match output logits of larger model~\cite{hintonDistillingKnowledgeNeural2015c}.
+    \item Weight Palettization: Clusters weights (e.g. via $k$-means), then stores every weight as the centroid of the cluster they belong to~\cite{wuDeep$k$MeansReTraining2018a}.
+    \item Quantization: \textbf{We focus on this method for our thesis.} Stores weights in a data type of less bit width (e.g. int8), compared to the original data type (e.g. float32)~\cite{jacobQuantizationTrainingNeural2017a}.
+  \end{itemize}
+\end{frame}
+\begin{frame}{Contributions}
+  Our contributions in this work are twofold:
+  \begin{itemize}
+    \item First, we demonstrate a novel inversion method against AdaRound to recover coarse outlines that represent its calibration data, motivating the need to consider privacy in data-dependent quantization method.
+    \item Second, we propose a gradient-aware adaptive rounding method based on AdaRound, and apply the proposed method on two language models.
+  \end{itemize} 
+\end{frame}
+
+\section{Preliminaries}
+\begin{frame}{Compressibility of Deep Neural Networks}
+Source coding theorem~\cite{shannonInformationTheory}:
+\begin{itemize}
+    \item $n$ i.i.d. (independent and identically distributed) random variables, each with entropy $H(X)$, can be compressed to $nH(X)$ bits on average, with negligible information loss, as $n \rightarrow \infty$ 
+\end{itemize}
+In this case, $H(X)$, the entropy of a random variable, is the expected amount of information needed to describe it, and can be computed by:
+\begin{align}
+H(X)&:=-\sum_{x\in X}p(x)\log_2 p(x).
+\end{align}
+Note that the log base determines the units: $\log_2$ yields bits, $\log_{10}$ yields dits, and $\ln$ yields nats.
+\end{frame}
+\begin{frame}{Measuring Compressibility of LLMs}
+Total information stored in LLM weights: $\sim n \cdot \hat{H}(W)$ bits; Maximum possible total entropy of the model: $n\cdot b$ bits. It therefore follows that the capacity utilization by a model is:
+\begin{align}
+U(W) &:= \frac{\hat{H}(W)}{b}.
+\end{align}
+We use this method to quantify the capacity utilization of several modern LLMs:
+
+\begin{table}[H]
+\centering
+\caption{Entropy Estimate of Language Models (bfloat16)}
+\label{tab:bf16_entropy}
+\begin{tabular}{|c|c|c|}
+ \hline
+    Model & $\hat{H}(W)$ in bits & $U(W)$ \\ \hline
+    Qwen 3 4B~\cite{yangQwen3TechnicalReport2025b} & 10.58 & $10.58/16\approx66\%$ \\ \hline
+    Qwen 3.5 4B~\cite{teamQwen35AcceleratingProductivity2026} & 10.56 &  $10.56/16\approx66\%$ \\ \hline
+    Gemma 4 12B Instruct~\cite{teamGemma4Technical2026}& 10.69 & $10.69/16\approx67\%$ \\ \hline
+    GLM 4.7 Flash~\cite{z.aiinc.GLM47AdvancingCoding2025} (30B)& 10.49 & $10.49/16\approx66\%$ \\ \hline
+\end{tabular}
+\end{table}
+\end{frame}
+
+\begin{frame}{Small Language Models}
+TinyStories~\cite{eldanTinyStoriesHowSmall2023d} is a work that proposed a synthetic low-vocabulary dataset and several small language models, as low as 1 million parameters, that produce coherent English.
+\vfill
+One limitation we observed in this work is their usage of the default GPT-Neo~\cite{blackGPTNeoLargeScale2021} tokenizer (which is identical to the pretrained GPT-2~\cite{radford2019language} tokenizer), restricted to the top 10,000 tokens.
+\vfill
+As a preliminary experiment, we train two small language models on TinyStories v1 and TinyStories v2, respectively. We use a SentencePiece Byte-Pair Encoding (BPE) tokenizer~\cite{kudoSentencePieceSimpleLanguage2018} with a vocabulary size of 1024, and we used a LLaMa-based~\cite{touvronLLaMAOpenEfficient2023c} model with roughly half the parameters of the smallest reference model.
+\end{frame}
+
+\begin{frame}{Evaluation of Our LMs}
+We use perplexity~\cite{jelinekPerplexityMeasureDifficulty1977} as a quantitative metric to evaluate a language model's accuracy. For a model $\theta$, a text $x$ of length $N$, it is defined as the following.
+\begin{align}
+    \text{Perplexity}(\theta, x) = \left( \prod_{i=1}^N \frac{1}{p_\theta(x_i\mid x_1, x_2, \dots, x_{i-1})} \right)^{\frac1N}
+\end{align}
+In other words, it is the geometric mean of the inverse probabilities of a given text.
+\begin{table}[H]
+\centering
+\caption{Evaluation of Our Language Models}
+\label{tab:our_models_eval} \tiny
+\begin{tabular}{|c|cc|c|}
+\hline
+                                       & \multicolumn{1}{c|}{Reference}        & Ours (TinyStories v1) & Ours (TinyStories v2) \\ \hline
+Architecture                           & \multicolumn{1}{c|}{GPT-Neo}          & LLaMa                 & LLaMa                 \\ \hline
+Parameter Count                          & \multicolumn{1}{c|}{1.17M}            & 0.57M                 & 0.46M                 \\ \hline
+Training Data                                   & \multicolumn{2}{c|}{TinyStories v1}                  & TinyStories v2        \\ \hline
+Tokenizer (Vocab Size)                 & \multicolumn{1}{c|}{GPT-Neo}          & SentencePiece                & SentencePiece                \\ \hline
+Vocab Size                             & \multicolumn{1}{c|}{10000}            & 1024                  & 1024                  \\ \hline
+Perplexity $\downarrow$ (TinyStories v1) & \multicolumn{1}{c|}{19.3919} & \textbf{11.9006}      & ---                   \\ \hline
+Perplexity $\downarrow$ (TinyStories v2)& \multicolumn{1}{c|}{---}              & ---                   & 8.0994                \\ \hline
+\end{tabular}
+\end{table}
+\end{frame}
+
+\begin{frame}{Baseline Round-to-Nearest Quantization}
+Consider the symmetric uniform quantization method to int8:
+  \begin{itemize}
+      \item Quantization:
+      \begin{itemize}
+      \item $\text{scale} = \frac{\max(|W|)}{2^7-1}$
+      \item $W_{\text{quantized}} = \text{clamp}(\lfloor\frac{W}{\text{scale}}\rceil)$ 
+  \end{itemize}
+      \item Reconstruction (dequantization):
+      \begin{itemize}
+          \item $W_\text{reconstructed}=\text{scale}\cdot W_\text{quantized}$
+      \end{itemize}
+      \item Note that clamp() here refers to clamping a number between $[-2^7,2^7-1]$ to ensure its within the range of the data type.
+  \end{itemize}
+  We can see that the model weights are perturbed in the direction of $W_\text{reconstructed} - W$ after quantization and dequantization. Let us use our TinyStories v2 model to investigate the effects of perturbation direction on the model's accuracy.
+\end{frame}
+\begin{frame}{Loss Landscape: Direction Matters}
+  % line / random / towards-another-model figures
+\end{frame}
+
+\section{Literature Review}
+\begin{frame}{AdaRound: Objective}
+AdaRound~\cite{nagelAdaptiveRoundingPostTraining2020a} is a novel rounding method, which aims to minimize the difference in task loss of the quantized model and the unquantized model. The task loss of layer $j$ of the unquantized model is $\mathcal{L}(x, y, w_j)$, and the task loss of the same layer of the quantized model $\mathcal{L}(x, y, w_j + \Delta w_j)$. Therefore, the objective is:
+\begin{align}
+\underset{\Delta w_j}{\arg\min} \left(\mathcal{L}(x, y, w_j + \Delta w_j) - \mathcal{L}(x, y, w_j)\right).
+\end{align}
+Using second order Taylor expansion:
+\begin{align} \label{eq:adaround_taylor_expansion}
+\mathcal{L}(x, y, w_j + \Delta w_j) - \mathcal{L}(x, y, w_j) \approx \nabla\mathcal{L}(x, y, w_j)^T \Delta w_j + \frac{1}{2} \Delta w_j^T \mathbf{H} \Delta w_j
+\end{align}
+\end{frame}
+\begin{frame}{AdaRound: Approximations}
+The authors assert that $\nabla\mathcal{L}(x, y, w_j)$ is negligible, which transforms the objective into just:
+\begin{align}
+\mathcal{L}(x, y, w_j + \Delta w_j) - \mathcal{L}(x, y, w_j) \approx \frac{1}{2} \Delta w_j^T \mathbf{H} \Delta w_j
+\end{align}
+Finally, the authors formulate the optimization of weigh rounding for layer $j$ as the following Quadratic Unconstrained Binary Optimization (QUBO) problem.
+\begin{align}
+\underset{\Delta w_j}{\arg\min} \Delta w_j^T \mathbf{H} \Delta w_j
+\end{align}
+The above problem is NP-hard, so AdaRound uses the local mean squared error alongside a regularizer as a proxy. 
+
+\begin{align} \label{eq:adaround_objective}
+\arg\min_{\mathbf{V}} \left( \|\mathbf{W}x - \hat{\mathbf{W}}x\|_F^2 + f_\text{reg}(\mathbf{V}) \right)
+\end{align}
+\end{frame}
+\begin{frame}{AdaRound: Algorithm}
+\begin{algorithm}[H]
+\scriptsize
+\caption{AdaRound}\label{alg:adaround}
+\begin{algorithmic}[1]
+\Require $\mathbf{W}$, $X$ (calibration data), $t$ (number of iterations), $b$ (target bit width), $\beta$ (regularization parameter)
+\Ensure Quantized model $\mathbf{W}_q$, scales
+
+\State $x_{in} \gets \textsc{CacheActivations}(\mathbf{W}, X)$ \Comment{Forward pass on calibration data to cache input activations}
+\For{$w_j$ in $\mathbf{W}$}
+\State $q_{\text{min}} \gets -2^{b - 1}$
+\State $q_{\text{max}} \gets 2^{b - 1} - 1$
+\State $\text{scales}_j \gets \frac{\max(w_j)}{q_{\text{max}}}$ \Comment{Store scale for output}
+\State $\mathbf{V}_j \gets h^{-1}(w_j - \lfloor w_j \rfloor)$ \Comment{Initialize $\mathbf{V}_j$}
+
+\For{$i \in \{0 \ldots t\}$}
+\State $\beta \gets \textsc{Anneal}(\beta)$
+\State $\hat{w}_j \gets \text{clamp}\left(\lfloor \frac{w_j}{\text{scales}_j} \rfloor + h(\mathbf{V}_j), q_\text{min}, q_\text{max}\right)$
+\State $\mathcal{L} \gets \|w_j x_{in} - \hat{w}_j x_{in}\|_F^2 + \sum_{i, j} \left(1 - \lvert 2h(\mathbf{V}_{i,j}) - 1\rvert^\beta\right)$
+\State $\mathbf{V} \gets \mathbf{V} - \nabla \mathcal{L}$ \Comment{via autograd}
+\EndFor
+\State $\mathbf{W}_{Q_{i, j}} \gets \begin{cases}
+    \lceil w_{i, j} \rceil, &\text{where } h(\mathbf{V}_{i,j}) \geq 0.5 \\
+    \lfloor w_{i, j} \rfloor, &\text{otherwise}
+\end{cases}$ \Comment{Finalize quantization}
+\EndFor
+\State \Return $\mathbf{W}_Q$, scales
+\end{algorithmic}
+\end{algorithm}
+\end{frame}
+\begin{frame}{Limitations of AdaRound}
+\begin{itemize}
+  \item First, using calibration data can cause some information to be encoded into the weight perturbation matrix. We empirically verify this in Contribution 1.
+  \item Second, the assumption in Equation \ref{eq:adaround_taylor_expansion} that the gradient of the loss function for pretrained converged models is negligible (for which empirical evidence was not provided) is challenged by recent literature. 
+\end{itemize}
+\end{frame}
+\begin{frame}{AdaRound's Zero-Gradient Assumption}
+While one might expect gradient descent to follow a smooth, stable path to an optimum, in reality it almost always operate in a highly dynamic, oscillatory regime described as the \textbf{Edge of Stability}~\cite{cohenGradientDescentNeural2022a}, leading to chaotic loss curves such as:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.4\textwidth]{img/literature_review/kimi_k2_loss_curve.png}
+    \caption{Training Loss Curve of Kimi K2~\cite{teamKimiK2Open2026}}
+    \label{fig:kimi_k2_loss_curve}
+\end{figure}
+The oscillatory optimization also implies that the gradient for pretrained models are rarely zero. Recent literature~\cite{cohenGradientDescentNeural2022a} empirically show that even as the training loss decreases, the gradient norm of a model almost stays constant.
+\end{frame}
+
+\section{Contribution 1: Inversion Attack on AdaRound}
+\begin{frame}{Leakage Channel: The Null Space}
+  % ||Delta W x||^2 -> 0  <=>  x in N(Delta W)
+\end{frame}
+\begin{frame}{Proposed Inversion Method}
+  % SGD on ||Delta W tanh(x)||^2 (+ Gram matrix note)
+\end{frame}
+\begin{frame}{Experiment Setup}
+  % 3 datasets, iteration counts, metrics
+\end{frame}
+\begin{frame}{Results}
+  % metrics table + mean-calibration vs mean-recovered figure
+\end{frame}
+\begin{frame}{Ablation Study}
+  % SSIM stays 0.00 -> isolates calibration-data channel
+\end{frame}
+\begin{frame}{Discussion \& Limitations}
+  % mean-only recovery, low SSIM, TV/priors for future
+\end{frame}
+
+\section{Contribution 2: Gradient-Aware Adaptive Rounding}
+\begin{frame}{Method}
+  % finetune + EMA -> sign(W'-W) ~ -sign(grad); modified objective
+\end{frame}
+\begin{frame}{Experiment Setup}
+  % 2% data, AdamW, psi=100
+\end{frame}
+\begin{frame}{Results: Main Experiment}
+  % perplexity table; state "neutral to negative" upfront
+\end{frame}
+\begin{frame}{Ablation Study}
+  % highlight Ablation 3 beats AdaRound
+\end{frame}
+
+\section{Conclusion}
+\begin{frame}{Summary}
+  % 3 bullets
+\end{frame}
+\begin{frame}{Future Work}
+  % inversion quality, better gradient proxies, larger models
+\end{frame}
+
+\begin{frame}[t, allowframebreaks]{References}
+    \tiny \bibliography{reference}
+\end{frame}
+
+\end{document}
