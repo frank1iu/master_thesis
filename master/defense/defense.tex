@@ -260,13 +260,79 @@ The oscillatory optimization also implies that the gradient for pretrained model
 
 \section{Contribution 2: Gradient-Aware Adaptive Rounding}
 \begin{frame}{Method}
-  % finetune + EMA -> sign(W'-W) ~ -sign(grad); modified objective
+  \begin{itemize}
+    \item To reconcile AdaRound's assumption that the gradient term in Equation \ref{eq:adaround_taylor_expansion} can be ignored, and Central Flows' evidence that the gradient is nonzero even for pretrained converged models, we propose a modified version of AdaRound to incorporate awareness of the local gradient.
+    \item In order to minimize
+\begin{align}
+    \mathbb{E} \left[ g^{(w)^T} \Delta W \right],
+\end{align}
+we can attempt to force $\Delta W$ to have the same sign as $-g^{(w)^T}$. 
+\item We do this by finetuning the model on a small amount of data then taking the EMA of the model during finetuning as $W'_{\text{avg}}$. We add the Binary Cross Entropy (BCE) between the current rounding directions and $\text{sign}(W'_{\text{avg}} - W)$ as a penalty term to AdaRound's optimization objective. 
+  \end{itemize}
+\end{frame}
+\begin{frame}{Algorithm for EMA Finetuning}
+\begin{algorithm}[H]
+\caption{Gradient-Aware Adaptive Rounding (Finetuning)}\label{alg:gradient_aware_adaround_finetuning}
+\begin{algorithmic}[1]
+\Require $\mathbf{W}$, $X$ (calibration data), $\eta$ (learning rate), $B$ (batch size)
+\Ensure EMA of models during finetuning $W'_{\text{avg}}$
+\State $\mathbf{W}' \gets \mathbf{W}$
+\State $\mathbf{W}'_{\text{avg}} \gets \mathbf{W}$
+\State $N \gets \frac{X}{B}$ \Comment{Number of Iterations}
+\State $\alpha \gets \frac{2}{N+1}$ \Comment{EMA Smoothing Factor}
+\For{each batch $x_b$ in $X$}
+    \State $\hat{x}_b \gets \mathbf{W}'(x_b)$ \Comment{Forward pass}
+    \State $\mathcal{L} \gets \text{CrossEntropyLoss}(\hat{x}_b, x_b)$
+    \State $\mathbf{W}' \gets \mathbf{W}' - \eta \cdot \nabla \mathcal{L}$ \Comment{Backward pass}
+    \State $\mathbf{W}'_{\text{avg}} \gets \alpha \cdot \mathbf{W}'_{\text{avg}} + (1 - \alpha) \cdot \mathbf{W}'$ \Comment{Update EMA}
+\EndFor
+\State \Return $\mathbf{W}'_{\text{avg}}$
+\end{algorithmic}
+\end{algorithm}
+\end{frame}
+\begin{frame}{Proposed Method Objective}
+Our proposed method is essentially a modification to AdaRound's objective in Equation \ref{eq:adaround_objective}:
+
+\begin{align}
+\arg\min_{\mathbf{V}} \left( \|\mathbf{W}x - \hat{\mathbf{W}}x\|_F^2 + f_\text{reg}(\mathbf{V}) + \underbrace{\psi \cdot \textsc{BCE}\left(h(\mathbf{V}_j), \text{sign}(\mathbf{W}' - \mathbf{W})\right)}_{\text{Proposed addition}} \right)
+\end{align}
 \end{frame}
 \begin{frame}{Experiment Setup}
-  % 2% data, AdamW, psi=100
+  We evaluate the proposed method on our TinyStories models with the following hyperparameters and components.
+\begin{table}[H]
+\centering
+\caption{Implementation Details}
+\label{tab:implementation_detail_2}
+\begin{tabular}{ll}
+\hline
+\textbf{Hyperparameter/Component} & \textbf{Value} \\ \hline
+Finetuning Data & $2\%$ of Training Data \\
+Learning Rate & 3e-4 \\
+Optimizer & AdamW~\cite{loshchilovDecoupledWeightDecay2019} \\
+Learning Rate Scheduler & CosineAnnealingLR~\cite{loshchilovSGDRStochasticGradient2017} \\
+$\psi$ & 100.0 \\
+\hline
+\end{tabular}
+\end{table}
 \end{frame}
 \begin{frame}{Results: Main Experiment}
-  % perplexity table; state "neutral to negative" upfront
+  \begin{itemize}
+    \item We observe \textbf{neutral to negative} results using the proposed method. 
+    \item Note that the two models had different testing data (TinyStories v1 and TinyStories v2, respectively).
+  \end{itemize}
+\begin{table}[H]
+\centering
+\caption{Perplexity Evaluation of Proposed Method}
+\label{tab:gradient_aware_adaround_results}
+\begin{tabular}{|l|l|l|}
+\hline
+Type of Quantization & TinyStories V1   & TinyStories V2  \\ \hline
+None (Unquantized Model)          & 11.9006          & 8.0994          \\ \hline \hline
+Round-to-Nearest     & 11.9219          & 8.1224          \\ \hline
+AdaRound             & \textbf{11.9216}          & \textbf{8.1177} \\ \hline
+Proposed Method      & \textbf{11.9216} & 8.1179          \\ \hline
+\end{tabular}
+\end{table}
 \end{frame}
 \begin{frame}{Ablation Study}
   % highlight Ablation 3 beats AdaRound
