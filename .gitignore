@@ -1,5 +1,8 @@
 # Copy of platex/.latexmkrc
 master/.latexmkrc
+# Below are copies from top level directory
+defense/img
+defense/reference.bib
 
 ## Core latex/pdflatex auxiliary files:
 *.aux
