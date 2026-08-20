@@ -374,7 +374,7 @@ Note that the objective can be rewritten as:
     \item For each model, we performed 500 iterations of AdaRound quantization. We then attempted to invert the process by training 10 random Gaussian samples for 3,000 iterations using the Adam optimizer. We report SSIM, PSNR, and Normalized RMSE before and after the inversion.
   \end{itemize}
 \end{frame}
-\begin{frame}{Results}
+\begin{frame}{Quantitative Results}
     \begin{table}
     \footnotesize
     \centering
@@ -393,6 +393,35 @@ Note that the objective can be rewritten as:
     \end{table}
     \vfill
     The increase in PSNR and the decrease in RMSE across all datasets (mean over 10 samples) indicate that our method is recovering real structural information, although it is very coarse.
+\end{frame}
+\begin{frame}{Qualitative Results}
+Let us evaluate our results qualitatively by looking at the generated images. We observe an outline of a face, and we observe the structure of the lungs and the spine.
+\begin{figure}
+    \centering
+      \begin{subfigure}[b]{0.475\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/adaround_inversion/16acd81804674b3b8d69cbe4807a3e0f-result.png}
+        \caption{Results on Olivetti Faces}
+        \label{fig:adaround_inversion_olivetti}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.475\textwidth}
+    \centering
+      \includegraphics[width=\textwidth]{img/adaround_inversion/04a80ceb974248ffb6864725da78e909-result.png}
+      \caption{Results on Chest X-Ray Images (Pneumonia)}
+      \label{fig:adaround_inversion_xray}
+    \end{subfigure}
+    \caption{Qualitative Results of Inversion Algorithm}
+\end{figure}
+\end{frame}
+\begin{frame}{Qualitative Results Continued}
+On the Weizmann horse database, we can see a coarse silhouette of a horse.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{img/adaround_inversion/8bbfd491fcb644dda0d9a7b3db367b66-result.png}
+    \caption{Results on Weizmann Horse Database}
+    \label{fig:adaround_inversion_horse}
+\end{figure}
 \end{frame}
 \begin{frame}{Ablation Study}
   \begin{itemize}
