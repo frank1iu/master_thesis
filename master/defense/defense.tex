@@ -6,8 +6,10 @@
 \usepackage{algorithm, algpseudocode}
 \usepackage{amsfonts}
 \usepackage{amssymb}
+\usepackage{subcaption}
 \bibliographystyle{ieeetr}
 %\usefonttheme{serif}
+\setbeamertemplate{caption}[numbered]
 \setbeamertemplate{navigation symbols}{}
 \addtobeamertemplate{navigation symbols}{}{%
 \usebeamerfont{footline}%
@@ -39,7 +41,7 @@ The recent exponential scaling of Large Language Models (LLMs) has resulted in m
 \begin{frame}{Exponential Scaling of LLMs}
   Recently, the exponential scaling of LLM sizes has inadvertently resulted in models that are extremely challenging to deploy, thus causing users to rely on third-party providers for LLM usage.
 
-\begin{figure}[H]
+\begin{figure}
     \centering
     \includegraphics[width=0.6\textwidth]{img/intro/gerstmayr_llm_scaling.png}
     \caption{Observed exponential scaling of LLM sizes over time~\cite{gerstmayrMultibodyModelsGenerated2024} (Note: The GPT-4 figure is an estimate)}
@@ -97,7 +99,7 @@ U(W) &:= \frac{\hat{H}(W)}{b}.
 \end{align}
 We use this method to quantify the capacity utilization of several modern LLMs:
 
-\begin{table}[H]
+\begin{table}
 \centering
 \caption{Entropy Estimate of Language Models (bfloat16)}
 \label{tab:bf16_entropy}
@@ -126,7 +128,7 @@ We use perplexity~\cite{jelinekPerplexityMeasureDifficulty1977} as a quantitativ
     \text{Perplexity}(\theta, x) = \left( \prod_{i=1}^N \frac{1}{p_\theta(x_i\mid x_1, x_2, \dots, x_{i-1})} \right)^{\frac1N}
 \end{align}
 In other words, it is the geometric mean of the inverse probabilities of a given text.
-\begin{table}[H]
+\begin{table}
 \centering
 \caption{Evaluation of Our Language Models}
 \label{tab:our_models_eval} \tiny
@@ -160,8 +162,77 @@ Consider the symmetric uniform quantization method to int8:
   \end{itemize}
   We can see that the model weights are perturbed in the direction of $W_\text{reconstructed} - W$ after quantization and dequantization. Let us use our TinyStories v2 model to investigate the effects of perturbation direction on the model's accuracy.
 \end{frame}
-\begin{frame}{Loss Landscape: Direction Matters}
-  % line / random / towards-another-model figures
+\begin{frame}{Loss Landscape: Straight Line}
+First, we will sample models along a simple line:
+\begin{align}
+    \theta' = \theta + \epsilon,  \epsilon \in \{-0.0020 \dots 0.0015\} 
+\end{align}
+Note that the blue line in the figure represents $\epsilon \in \{-0.0015 \dots 0.0015\}$.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\textwidth]{img/loss_landscapes/loss_line.png}
+    \caption{Models Along a Line}
+    \label{fig:loss_line}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Loss Landscape: Moving Randomly}
+Next, we sample models stochastically from the following distribution. We sample 5 models for each $\sigma$.
+\begin{align}
+    \theta' \sim \mathcal{N}(\theta, \sigma^2\mathbf{I}), \sigma^2\in\{0.0005\dots0.0040\}
+\end{align}
+
+Note that we cap the perplexity at 100 in Figure \ref{fig:loss_stochastic_capped} for better visualization, because some perplexities are extremely large.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\textwidth]{img/loss_landscapes/loss_stochastic_capped.png}
+    \caption{Models from Gaussian Distribution}
+    \label{fig:loss_stochastic_capped}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Loss Landscape: Moving Randomly (Continued)}
+In Figure \ref{fig:loss_stochastic_avg}, we plot the average perplexities of each $\sigma$. We notice an outlier at $\sigma = 0.0024$, and removing it yields Figure \ref{fig:loss_stochastic_avg_outlier}.
+
+\begin{figure}
+    \centering
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/loss_landscapes/loss_stochastic_avg.png}
+        \caption{Averages}
+        \label{fig:loss_stochastic_avg}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/loss_landscapes/loss_stochastic_avg_outlier.png}
+        \caption{Averages (Outlier Removed)}
+        \label{fig:loss_stochastic_avg_outlier}
+    \end{subfigure}
+    \caption{Loss Landscape of Models from Gaussian Distribution}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Loss Landscape: Moving Towards Another Model}
+We pretrain another model with the same configuration as the base model, and move from the base model to the other model. The distance between these models, $\lVert \theta - \theta' \rVert_2$, is $75.6$, which means they're quite far apart, and the magnitude of perturbation is much greater than the previous experiments.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.6\textwidth]{img/loss_landscapes/loss_towards.png}
+    \caption{Moving Towards Another Model}
+    \label{fig:loss_towards}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Loss Landscape: Observations}
+  \begin{itemize}
+    \item When moving along a line, we notice that there is a ``basin'' of low loss. Moving towards the negative direction caused less degradation than moving towards the positive direction.
+    \item There was a huge outlier when moving randomly.
+    \item Moving towards another model resulted in less degradation despite the massive distance.
+  \end{itemize}
+  We therefore find that: \textbf{When weights of a model is perturbed, the loss does not degrade uniformly.}
 \end{frame}
 
 \section{Literature Review}
@@ -229,7 +300,7 @@ The above problem is NP-hard, so AdaRound uses the local mean squared error alon
 \begin{frame}{AdaRound's Zero-Gradient Assumption}
 While one might expect gradient descent to follow a smooth, stable path to an optimum, in reality it almost always operate in a highly dynamic, oscillatory regime described as the \textbf{Edge of Stability}~\cite{cohenGradientDescentNeural2022a}, leading to chaotic loss curves such as:
 
-\begin{figure}[H]
+\begin{figure}
     \centering
     \includegraphics[width=0.4\textwidth]{img/literature_review/kimi_k2_loss_curve.png}
     \caption{Training Loss Curve of Kimi K2~\cite{teamKimiK2Open2026}}
@@ -274,7 +345,28 @@ The oscillatory optimization also implies that the gradient for pretrained model
 \State \Return $\tanh(\hat{x})$
 \end{algorithmic}
 \end{algorithm}
-    
+\end{frame}
+\begin{frame}{Simple Optimization}
+Note that the objective can be rewritten as:
+\begin{align}
+\|\Delta W \hat{x}\|_2^2 = (\Delta W \hat{x})^T(\Delta W \hat{x}) = \hat{x}^T (\Delta W^T \Delta W) \hat{x}.
+\end{align}We can therefore make this simple optimization:
+
+\begin{algorithm}[H]
+\caption{Optimized AdaRound Inversion Algorithm}\label{alg:inversion_optimized}
+\begin{algorithmic}[1]
+\Require $W$, $\hat{W}$, $\hat{x}_{\text{init}}$, No. of Iterations $K$, Learning Rate $\eta$
+\State $\Delta W \gets W - \hat{W}$
+\State $\hat{x} \gets \hat{x}_\text{init}$
+\State $G \gets \Delta W^T \Delta W$
+\For{$k = 1$ \textbf{to} $K$}
+    \State $\mathcal{L}  \gets \sum \left( \tanh(\hat{x})^TG  \tanh(\hat{x}) \right)$ (Forward pass)
+    \State $\frac{\partial \mathcal{L}}{\partial \hat{x}} \gets \text{Autograd}(\mathcal{L}, \hat{x})$ (Backward pass)
+    \State $\hat{x} \gets \hat{x} - \eta \frac{\partial\mathcal{L}}{\partial{\hat{x}}}$ (Update $\hat{x}$)
+\EndFor
+\State \Return $\tanh(\hat{x})$
+\end{algorithmic}
+\end{algorithm}
 \end{frame}
 \begin{frame}{Experiment Setup}
   \begin{itemize}
@@ -283,7 +375,7 @@ The oscillatory optimization also implies that the gradient for pretrained model
   \end{itemize}
 \end{frame}
 \begin{frame}{Results}
-    \begin{table}[H]
+    \begin{table}
     \footnotesize
     \centering
     \caption{Metrics from Random Initialization vs. Our Method}
@@ -307,7 +399,7 @@ The oscillatory optimization also implies that the gradient for pretrained model
     \item We perform the same inversion method against the same models quantized with round-to-nearest (RTN) rounding.
     \item Since RTN does not use calibration data, we compare our method's samples to the mean of the training data instead. 
   \end{itemize}
-\begin{table}[H]
+\begin{table}
 \centering \scriptsize
 \caption{Results from Ablation Study}
 \label{tab:ablation}
@@ -332,7 +424,6 @@ Horse DB (After) & 0.00 & 3.38 (+0.81) & 1.00 (-0.10) \\ \hline
     \item The main limitation is that our method only reconstructs samples that look like the mean of the training data. It does not reconstruct individual samples as-is. Furthermore, the SSIM we obtained is rather low and there is much room for further improvement.
     \item Another limitation is that to perform this attack, the weight perturbation matrix is required. Typically this means needing to obtain both the unquantized and quantized models.
   \end{itemize}
-  % mean-only recovery, low SSIM, TV/priors for future
 \end{frame}
 
 \section{Contribution 2: Gradient-Aware Adaptive Rounding}
@@ -376,7 +467,7 @@ Our proposed method is essentially a modification to AdaRound's objective in Equ
 \end{frame}
 \begin{frame}{Experiment Setup}
   We evaluate the proposed method on our TinyStories models with the following hyperparameters and components.
-\begin{table}[H]
+\begin{table}
 \centering
 \caption{Implementation Details}
 \label{tab:implementation_detail_2}
@@ -397,7 +488,7 @@ $\psi$ & 100.0 \\
     \item We observe \textbf{neutral to negative} results using the proposed method. 
     \item Note that the two models had different testing data (TinyStories v1 and TinyStories v2, respectively).
   \end{itemize}
-\begin{table}[H]
+\begin{table}
 \centering
 \caption{Perplexity Evaluation of Proposed Method}
 \label{tab:gradient_aware_adaround_results}
@@ -411,16 +502,67 @@ Proposed Method      & \textbf{11.9216} & 8.1179          \\ \hline
 \end{tabular}
 \end{table}
 \end{frame}
-\begin{frame}{Ablation Study}
-  % highlight Ablation 3 beats AdaRound
+\begin{frame}{Ablation Study: Method}
+We report an ablation study by ablating two possible elements of the proposed method: AdaRound and EMA. Ablating EMA means we use final finetuned model weights instead of the EMA of model weights during all iterations. Ablating AdaRound means we steer the rounding using only the sign of the weight perturbation matrix:
+\begin{algorithm}[H] \scriptsize
+\caption{Gradient-based Steering without AdaRound}\label{alg:ablate_adaround}
+\begin{algorithmic}[1]
+\Require $\mathbf{W}$ (unquantized weights), $\mathbf{W}'$ (calibration model), $b$ (target bit width)
+\Ensure Quantized model $\mathbf{W}_q$
+\Function{CustomRound}{$\mathbf{W}$, $\mathbf{W}'$}
+  \State $\mathbf{W}_{i,j} \gets \begin{cases}
+    \lceil \mathbf{W}_{i, j} \rceil, &\text{where } \mathbf{W}_{i, j} < \mathbf{W}'_{i, j} \\
+    \lfloor \mathbf{W}_{i, j} \rfloor, &\text{otherwise}
+\end{cases}$
+  \State \Return $\mathbf{W}$
+\EndFunction
+\State $q_{\text{min}} \gets -2^{b - 1}$
+\State $q_{\text{max}} \gets 2^{b - 1} - 1$
+\State $\text{scale} \gets \frac{\max(\mathbf{W})}{q_{\text{max}}}$
+\State $\mathbf{W}_q \gets \text{clamp}\left(\textsc{CustomRound}(\frac{\mathbf{W}}{\text{scale}}), q_\text{min}, q_\text{max}\right)$
+\State \Return $\mathbf{W}_q$, scale
+\end{algorithmic}
+\end{algorithm}
+\end{frame}
+\begin{frame}{Ablation Study: Results}
+\begin{table}
+\centering \tiny
+\caption{Perplexity Evaluation of Ablation Studies}
+\label{tab:adaround_ablation_study}
+\begin{tabular}{|c|c|c|l|l|}
+\hline
+& AdaRound + BCE & EMA          & TinyStories V1 & TinyStories V2  \\ \hline
+Main Experiment & $\checkmark$ & $\checkmark$ & 11.9216        & 8.1179          \\ \hline
+Ablation 1 & $\checkmark$ & $\times$     & 11.9216        & 8.1197          \\ \hline
+Ablation 2 & $\times$     & $\checkmark$ & 11.9166        & 8.1546          \\ \hline
+Ablation 3 & $\times$     & $\times$     & \textbf{11.9050}        & \textbf{8.1084} \\ \hline
+\end{tabular}
+\end{table}
+\begin{itemize}
+  \item We notice that we achieved the best performance by ablating both EMA and AdaRound (outperforming original AdaRound)
+  \item This ablation study shows that the gradient direction can still potentially be useful despite the neutral to negative results in the main experiment.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Discussion}
+  
 \end{frame}
 
 \section{Conclusion}
-\begin{frame}{Summary}
-  % 3 bullets
+\begin{frame}{Conclusion}
+\begin{itemize}
+  \item We first quantified the compressibility of modern LLMs and confirmed that their capacity is underutilized. 
+  \item We analysed the loss landscape of a language model to show the effects of weight perturbation direction on a model's accuracy.
+  \item We find that AdaRound inadvertently encodes information about its calibration data into its weight perturbation matrix, and verified empirically.
+  \item We challenged an assertion in AdaRound that the gradient of the loss function for pretrained converged models is negligible. However, we obtained neutral to negative results using our proposed method.
+\end{itemize}
 \end{frame}
 \begin{frame}{Future Work}
-  % inversion quality, better gradient proxies, larger models
+In the future, we would like to:
+  \begin{itemize}
+    \item Improve the quality of the inversion attack using regularizers (e.g. Total Variation (TV) loss) and priors (e.g. deep inversion priors). 
+    \item Furthermore explore the incorporation of the gradient of the loss function in AdaRound, possibly using other proxies to estimate the direction of the gradient. \item Replicate our experiments on models of larger scale, so we can determine whether its behavior persists beyond smaller on-device models.
+  \end{itemize}
 \end{frame}
 
 \begin{frame}[t, allowframebreaks]{References}
