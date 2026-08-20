@@ -119,7 +119,7 @@ We implement AdaRound in Algorithm \ref{alg:adaround}.
 \end{algorithm}
 
 \subsection{Limitations}
-We identify two important limitations of AdaRound. First, using calibration data can cause some information to be encoded into the weight perturbation matrix. We empirically verify this by demonstrating a novel inversion method to reconstruct representations of training data in Chapter \ref{chap:adaround_inversion}. Second, the assumption in Equation \ref{eq:adaround_taylor_expansion} that the gradient of the loss function for pretrained converged models is neglibile (for which empirical evidence was not provided) is challenged by recent literature, which we review below.
+We identify two important limitations of AdaRound. First, using calibration data can cause some information to be encoded into the weight perturbation matrix. We empirically verify this by demonstrating a novel inversion method to reconstruct representations of training data in Chapter \ref{chap:adaround_inversion}. Second, the assumption in Equation \ref{eq:adaround_taylor_expansion} that the gradient of the loss function for pretrained converged models is negligible (for which empirical evidence was not provided) is challenged by recent literature, which we review below.
 
 \section{Edge of Stability and Central Flows}
 

@@ -232,7 +232,7 @@ We pretrain another model with the same configuration as the base model, and mov
     \item There was a huge outlier when moving randomly.
     \item Moving towards another model resulted in less degradation despite the massive distance.
   \end{itemize}
-  We therefore find that: \textbf{When weights of a model is perturbed, the loss does not degrade uniformly.}
+  We therefore find that: \textbf{When weights of a model are perturbed, the loss does not degrade uniformly.}
 \end{frame}
 
 \section{Literature Review}
@@ -251,7 +251,7 @@ The authors assert that $\nabla\mathcal{L}(x, y, w_j)$ is negligible, which tran
 \begin{align}
 \mathcal{L}(x, y, w_j + \Delta w_j) - \mathcal{L}(x, y, w_j) \approx \frac{1}{2} \Delta w_j^T \mathbf{H} \Delta w_j
 \end{align}
-Finally, the authors formulate the optimization of weigh rounding for layer $j$ as the following Quadratic Unconstrained Binary Optimization (QUBO) problem.
+Finally, the authors formulate the optimization of weight rounding for layer $j$ as the following Quadratic Unconstrained Binary Optimization (QUBO) problem.
 \begin{align}
 \underset{\Delta w_j}{\arg\min} \Delta w_j^T \mathbf{H} \Delta w_j
 \end{align}
@@ -324,7 +324,7 @@ The oscillatory optimization also implies that the gradient for pretrained model
 \end{frame}
 \begin{frame}{Realizing an Attack}
   \begin{itemize}
-    \item If an attacker has access to both the original weights ($W$) and the quantized weights ($\hat{W}$), they can recover the calibration data by searching for any vector that satisfies this null space property.
+    \item If an attacker has access to both the original weights ($W$) and the quantized weights ($\hat{W}$), they can recover representations of the calibration data by searching for any vector that satisfies this null space property.
     \item For example, hypothetically: a company downloads an open-source vision model, quantizes it with AdaRound using confidential internal data (e.g. patient records), then deploys it onto edge devices sold to customers. An attacker can reconstruct representations of the calibration data by extracting the quantized $\hat{W}$ from the edge devices, then performing the inversion on the weight perturbation matrix $\Delta W = W - \hat{W}$.
   \end{itemize}
   
@@ -370,7 +370,7 @@ Note that the objective can be rewritten as:
 \end{frame}
 \begin{frame}{Experiment Setup}
   \begin{itemize}
-    \item We attempt an inversion on MLPs trained on the Olivetti faces dataset \cite{JMLR:v12:pedregosa11a} the Weizmann Horse Database\cite{weizmannHorseDB}, and a Chest X-Ray Images dataset\cite{kermanyIdentifyingMedicalDiagnoses2018} using an MLP classifier quantized by AdaRound.
+    \item We attempt an inversion on MLPs trained on the Olivetti faces dataset \cite{JMLR:v12:pedregosa11a}, the Weizmann Horse Database\cite{weizmannHorseDB}, and a Chest X-Ray Images dataset\cite{kermanyIdentifyingMedicalDiagnoses2018} using an MLP classifier quantized by AdaRound.
     \item For each model, we performed 500 iterations of AdaRound quantization. We then attempted to invert the process by training 10 random Gaussian samples for 3,000 iterations using the Adam optimizer. We report SSIM, PSNR, and Normalized RMSE before and after the inversion.
   \end{itemize}
 \end{frame}
@@ -392,7 +392,7 @@ Note that the objective can be rewritten as:
     \end{tabular}
     \end{table}
     \vfill
-    The increase in PSNR and the decrease in RMSE across all datasets (average over 10 samples) indicate that our method is recovering real structural information, although it is very coarse.
+    The increase in PSNR and the decrease in RMSE across all datasets (mean over 10 samples) indicate that our method is recovering real structural information, although it is very coarse.
 \end{frame}
 \begin{frame}{Ablation Study}
   \begin{itemize}
@@ -502,9 +502,27 @@ Proposed Method      & \textbf{11.9216} & 8.1179          \\ \hline
 \end{tabular}
 \end{table}
 \end{frame}
+\begin{frame}{Ablation Study}
+We report an ablation study by ablating two possible elements of the proposed method: AdaRound and EMA. Ablating EMA means we use final finetuned model weights instead of the EMA of model weights during all iterations. 
+\begin{table}
+\centering \scriptsize
+\caption{Perplexity Evaluation of Ablation Studies}
+\label{tab:adaround_ablation_study}
+\begin{tabular}{|c|c|c|l|l|}
+\hline
+& AdaRound+BCE & EMA          & TinyStories V1 & TinyStories V2  \\ \hline
+Main Experiment & $\checkmark$ & $\checkmark$ & 11.9216        & 8.1179          \\ \hline
+Ablation 1 & $\checkmark$ & $\times$     & 11.9216        & 8.1197          \\ \hline
+Ablation 2 & $\times$     & $\checkmark$ & 11.9166        & 8.1546          \\ \hline
+Ablation 3 & $\times$     & $\times$     & \textbf{11.9050}        & \textbf{8.1084} \\ \hline
+\end{tabular}
+\end{table}
+Note again that the two models had different testing data
+(TinyStories v1 and TinyStories v2, respectively).
+\end{frame}
 \begin{frame}{Ablation Study: Method}
-We report an ablation study by ablating two possible elements of the proposed method: AdaRound and EMA. Ablating EMA means we use final finetuned model weights instead of the EMA of model weights during all iterations. Ablating AdaRound means we steer the rounding using only the sign of the weight perturbation matrix:
-\begin{algorithm}[H] \scriptsize
+Note that ablating AdaRound means we steer the rounding using only the sign of the weight perturbation matrix:
+\begin{algorithm}[H] \small
 \caption{Gradient-based Steering without AdaRound}\label{alg:ablate_adaround}
 \begin{algorithmic}[1]
 \Require $\mathbf{W}$ (unquantized weights), $\mathbf{W}'$ (calibration model), $b$ (target bit width)
@@ -524,28 +542,14 @@ We report an ablation study by ablating two possible elements of the proposed me
 \end{algorithmic}
 \end{algorithm}
 \end{frame}
-\begin{frame}{Ablation Study: Results}
-\begin{table}
-\centering \tiny
-\caption{Perplexity Evaluation of Ablation Studies}
-\label{tab:adaround_ablation_study}
-\begin{tabular}{|c|c|c|l|l|}
-\hline
-& AdaRound + BCE & EMA          & TinyStories V1 & TinyStories V2  \\ \hline
-Main Experiment & $\checkmark$ & $\checkmark$ & 11.9216        & 8.1179          \\ \hline
-Ablation 1 & $\checkmark$ & $\times$     & 11.9216        & 8.1197          \\ \hline
-Ablation 2 & $\times$     & $\checkmark$ & 11.9166        & 8.1546          \\ \hline
-Ablation 3 & $\times$     & $\times$     & \textbf{11.9050}        & \textbf{8.1084} \\ \hline
-\end{tabular}
-\end{table}
-\begin{itemize}
-  \item We notice that we achieved the best performance by ablating both EMA and AdaRound (outperforming original AdaRound)
-  \item This ablation study shows that the gradient direction can still potentially be useful despite the neutral to negative results in the main experiment.
-\end{itemize}
-\end{frame}
 
 \begin{frame}{Discussion}
-  
+  \begin{itemize}
+    \item We notice that we achieved the best performance by ablating both EMA and AdaRound (outperforming original AdaRound)
+    \item This ablation study shows that the gradient direction can still potentially be useful despite the neutral to negative results in the main experiment.
+    \item However, it is also possible that while the gradient is non-zero, the assertion that it is zero is simply ``good enough'' for the search of the optimal rounding direction.
+    \item Finally, it might be possible to consider a better proxy than the direction towards a finetuned model.
+  \end{itemize}
 \end{frame}
 
 \section{Conclusion}
@@ -560,7 +564,7 @@ Ablation 3 & $\times$     & $\times$     & \textbf{11.9050}        & \textbf{8.1
 \begin{frame}{Future Work}
 In the future, we would like to:
   \begin{itemize}
-    \item Improve the quality of the inversion attack using regularizers (e.g. Total Variation (TV) loss) and priors (e.g. deep inversion priors). 
+    \item Improve the quality of the inversion attack using regularizers (e.g. Total Variation (TV) loss) and priors (e.g. deep image priors). 
     \item Furthermore explore the incorporation of the gradient of the loss function in AdaRound, possibly using other proxies to estimate the direction of the gradient. \item Replicate our experiments on models of larger scale, so we can determine whether its behavior persists beyond smaller on-device models.
   \end{itemize}
 \end{frame}

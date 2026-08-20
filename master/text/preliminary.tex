@@ -49,7 +49,7 @@ This allows us to treat $0\ln 0$ as $0$. We can see that the total information s
 U(W) &:= \frac{\hat{H}(W)}{b}
 \end{align}
 
-Note that $U \in [0, 1]$, and $U = 1$ implies the model is nearly incompressible losslessly, while $U < 1$ implies the model can be losslessly compressed to $1 - U$ times its current size. For example, if $U = 0.5$, the model can be compressed to half its size with neglibile information loss.
+Note that $U \in [0, 1]$, and $U = 1$ implies the model is nearly incompressible losslessly, while $U < 1$ implies the model can be losslessly compressed to $1 - U$ times its current size. For example, if $U = 0.5$, the model can be compressed to half its size with negligible information loss.
 
 We now have a method to quantify the compressibility of models. We use it to evaluate several language models, and report the result in Table \ref{tab:bf16_entropy}.
 
@@ -398,5 +398,5 @@ We observe from Figure \ref{fig:loss_towards} that even though the magnitude of 
 \todo{Consider adding an experiment: loss when moving towards the direction of the gradient}
 
 \subsection{Discussion}
-The key insight from this experiment is the fact that when weights of a model is perturbed, the loss does not degrade uniformly. And there exists directions of perturbation that result in massive loss increases, which outlines the potential need for opimizing the direction of rounding in post-training quantization.
+The key insight from this experiment is the fact that when weights of a model are perturbed, the loss does not degrade uniformly. And there exists directions of perturbation that result in massive loss increases, which outlines the potential need for opimizing the direction of rounding in post-training quantization.
 \end{document}
