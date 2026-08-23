@@ -48,7 +48,7 @@ The recent exponential scaling of Large Language Models (LLMs) has resulted in m
     \label{fig:gerstmayr_llm_scaling}
 \end{figure}
 \end{frame}
-\begin{frame}{Why Compress LLMs?}
+\begin{frame}{Problems with Third-Party APIs}
   \begin{itemize}
     \item Environmental Effects:  GPT-3's training had an estimated $\text{CO}_2e$ of $\sim$552.1 tons~\cite{pattersonCarbonEmissionsLarge2021}, GPT-4's training had an estimated $\text{CO}_2e$ of $\sim$6912 tons~\cite{kausarQuantifyingClimateRisk2026}, and Llama 3.3~\cite{grattafioriLlama3Herd2024c}'s training had an estimated $\text{CO}_2e$ of $\sim$11,390 tons.
     \item Cost: For example, OpenAI o1~\cite{openaiOpenAIO1System2026} in ``pro mode'' costs \$150 per 1 million tokens input, and \$600 per 1 million tokens output. Uber's yearly AI budget was exhausted in 4 months, while Microsoft began cancelling Claude Code licenses just 6 months after acquiring them~\cite{jakeUberBurnedIts}.
@@ -62,6 +62,7 @@ The recent exponential scaling of Large Language Models (LLMs) has resulted in m
     \item Latency: Doesn't have to rely on third-party scheduling, can prioritize urgent tasks
     \item Cost: Reduces API fees, network costs, and even environmental emissions
   \end{itemize}
+  Therefore, our goal is to improve model compression to enable efficient on-device AI. Furthermore, we also explore a side effect of model compression (privacy): data-dependent post-training quantization may leak some calibration data. 
 \end{frame}
 \begin{frame}{Model Compression Methods}
   Methods typically used for the compression of deep neural networks:
@@ -72,11 +73,11 @@ The recent exponential scaling of Large Language Models (LLMs) has resulted in m
     \item Quantization: \textbf{We focus on this method for our thesis.} Stores weights in a data type of less bit width (e.g. int8), compared to the original data type (e.g. float32)~\cite{jacobQuantizationTrainingNeural2017a}.
   \end{itemize}
 \end{frame}
-\begin{frame}{Contributions}
-  Our contributions in this work are twofold:
+\begin{frame}{Objective \& Contributions}
+  Overall, our goal is to investigate model compression and its side effects (specifically, privacy) to enable efficient on-device AI. We achieve this by the following.
   \begin{itemize}
-    \item First, we demonstrate a novel inversion method against AdaRound to recover coarse outlines that represent its calibration data, motivating the need to consider privacy in data-dependent quantization method.
-    \item Second, we propose a gradient-aware adaptive rounding method based on AdaRound, and apply the proposed method on two language models.
+    \item A novel inversion method against AdaRound to recover coarse outlines that represent its calibration data.
+    \item A proposed gradient-aware adaptive rounding method based on AdaRound, applied on two language models.
   \end{itemize} 
 \end{frame}
 
@@ -115,11 +116,11 @@ We use this method to quantify the capacity utilization of several modern LLMs:
 \end{frame}
 
 \begin{frame}{Small Language Models}
-TinyStories~\cite{eldanTinyStoriesHowSmall2023d} is a work that proposed a synthetic low-vocabulary dataset and several small language models, as low as 1 million parameters, that produce coherent English.
-\vfill
-One limitation we observed in this work is their usage of the default GPT-Neo~\cite{blackGPTNeoLargeScale2021} tokenizer (which is identical to the pretrained GPT-2~\cite{radford2019language} tokenizer), restricted to the top 10,000 tokens.
-\vfill
-As a preliminary experiment, we train two small language models on TinyStories v1 and TinyStories v2, respectively. We use a SentencePiece Byte-Pair Encoding (BPE) tokenizer~\cite{kudoSentencePieceSimpleLanguage2018} with a vocabulary size of 1024, and we used a LLaMa-based~\cite{touvronLLaMAOpenEfficient2023c} model with roughly half the parameters of the smallest reference model.
+  \begin{itemize}
+    \item TinyStories~\cite{eldanTinyStoriesHowSmall2023d} proposed a synthetic low-vocabulary dataset and several small language models, as low as 1M parameters, that produce coherent English.
+    \item \textbf{Limitations:} their usage of the default GPT-Neo~\cite{blackGPTNeoLargeScale2021} tokenizer (which is identical to the pretrained GPT-2~\cite{radford2019language} tokenizer), restricted to the top 10,000 tokens.
+    \item \textbf{Our models:} we train two small language models on TinyStories v1 and TinyStories v2, respectively. We use a SentencePiece Byte-Pair Encoding (BPE) tokenizer~\cite{kudoSentencePieceSimpleLanguage2018} with a vocabulary size of 1024, and we used a LLaMa-based~\cite{touvronLLaMAOpenEfficient2023c} model with roughly half the parameters of the smallest reference model.
+  \end{itemize}
 \end{frame}
 
 \begin{frame}{Evaluation of Our LMs}
@@ -160,8 +161,11 @@ Consider the symmetric uniform quantization method to int8:
       \end{itemize}
       \item Note that clamp() here refers to clamping a number between $[-2^7,2^7-1]$ to ensure its within the range of the data type.
   \end{itemize}
-  We can see that the model weights are perturbed in the direction of $W_\text{reconstructed} - W$ after quantization and dequantization. Let us use our TinyStories v2 model to investigate the effects of perturbation direction on the model's accuracy.
+  Evidently, model weights are perturbed in the direction of $W_\text{reconstructed} - W$ after quantization and dequantization. We investigate the effects of perturbation direction on model accuracy on our TinyStories V2 model.
 \end{frame}
+
+\iffalse
+
 \begin{frame}{Loss Landscape: Straight Line}
 First, we will sample models along a simple line:
 \begin{align}
@@ -226,13 +230,16 @@ We pretrain another model with the same configuration as the base model, and mov
 \end{figure}
 \end{frame}
 
+\fi
+
 \begin{frame}{Loss Landscape: Observations}
+  We explored the loss landscape of our TinyStories model and found:
   \begin{itemize}
-    \item When moving along a line, we notice that there is a ``basin'' of low loss. Moving towards the negative direction caused less degradation than moving towards the positive direction.
-    \item There was a huge outlier when moving randomly.
+    \item When moving along a line, there was a ``basin'' of low loss, and moving towards the negative direction caused less degradation than moving towards the positive direction.
+    \item There was a huge outlier of high perplexity when moving randomly.
     \item Moving towards another model resulted in less degradation despite the massive distance.
   \end{itemize}
-  We therefore find that: \textbf{When weights of a model are perturbed, the loss does not degrade uniformly.}
+  We therefore find that: \textbf{When weights of a model are perturbed, the loss does not degrade uniformly.} Some directions result in massive degradation while some directions preserved more accuracy.
 \end{frame}
 
 \section{Literature Review}
@@ -293,8 +300,8 @@ The above problem is NP-hard, so AdaRound uses the local mean squared error alon
 \end{frame}
 \begin{frame}{Limitations of AdaRound}
 \begin{itemize}
-  \item First, using calibration data can cause some information to be encoded into the weight perturbation matrix. We empirically verify this in Contribution 1.
-  \item Second, the assumption in Equation \ref{eq:adaround_taylor_expansion} that the gradient of the loss function for pretrained converged models is negligible (for which empirical evidence was not provided) is challenged by recent literature. 
+  \item \textbf{Privacy} of calibration data: AdaRound can cause some information to be encoded into the weight perturbation matrix. We empirically verify this in Contribution 1.
+  \item The assumption in Equation \ref{eq:adaround_taylor_expansion} that the gradient of the loss function for pretrained converged models is negligible (for which empirical evidence was not provided) is \textbf{challenged by recent literature.} 
 \end{itemize}
 \end{frame}
 \begin{frame}{AdaRound's Zero-Gradient Assumption}
@@ -312,13 +319,13 @@ The oscillatory optimization also implies that the gradient for pretrained model
 \section{Contribution 1: Inversion Attack on AdaRound}
 \begin{frame}{Leakage Channel: The Null Space}
   \begin{itemize}
-    \item If we look at the AdaRound objective, the goal is to make $\|Wx - \hat{W}x\|_F^2$ approach zero. If we define the weight perturbation as $\Delta W = W - \hat{W}$, this means that for a model quantized using AdaRound:
+    \item AdaRound's objective is to make $\|Wx - \hat{W}x\|_F^2$ approach zero. Let $\Delta W = W - \hat{W}$. For a model quantized using AdaRound:
     \item[] {\Large
     \begin{align*}
         \Delta W x &\approx 0
     \end{align*}
     }
-    \item Mathematically, this implies that the calibration data $x$ is approximately in the \textbf{null space} of the perturbation matrix. In other words, $x \subset \mathcal{N}(\Delta W)$. We can therefore exploit this property to generate samples that resemble the mean of the calibration data.
+    \item So the calibration data $x$ is approximately in the \textbf{null space} of the perturbation matrix. In other words, $x \subset \mathcal{N}(\Delta W)$. We can therefore exploit this property to generate samples that resemble the mean of the calibration data.
     \item We \textbf{can't} reconstruct exact pixel-for-pixel calibration samples. However, we demonstrate that by implementing this as a simple optimization problem, we can reconstruct representations that look like the mean of these calibration samples.
   \end{itemize}
 \end{frame}
@@ -370,7 +377,7 @@ Note that the objective can be rewritten as:
 \end{frame}
 \begin{frame}{Experiment Setup}
   \begin{itemize}
-    \item We attempt an inversion on MLPs trained on the Olivetti faces dataset \cite{JMLR:v12:pedregosa11a}, the Weizmann Horse Database\cite{weizmannHorseDB}, and a Chest X-Ray Images dataset\cite{kermanyIdentifyingMedicalDiagnoses2018} using an MLP classifier quantized by AdaRound.
+    \item We attempt an inversion on MLPs trained on the Olivetti faces dataset \cite{JMLR:v12:pedregosa11a}, the Weizmann Horse Database\cite{weizmannHorseDB}, and a Chest X-Ray Images dataset\cite{kermanyIdentifyingMedicalDiagnoses2018} using an MLP classifier quantized by AdaRound. Note that this method can also be applied to LLMs, but we are using image models as a proof-of-concept.
     \item For each model, we performed 500 iterations of AdaRound quantization. We then attempted to invert the process by training 10 random Gaussian samples for 3,000 iterations using the Adam optimizer. We report SSIM, PSNR, and Normalized RMSE before and after the inversion.
   \end{itemize}
 \end{frame}
@@ -449,8 +456,9 @@ Horse DB (After) & 0.00 & 3.38 (+0.81) & 1.00 (-0.10) \\ \hline
 \end{frame}
 \begin{frame}{Discussion \& Limitations}
   \begin{itemize}
-    \item Even though the SSIM in the main experiment is quite low, we observe empirical evidence of the leakage channel. Furthermore, the SSIM in the ablation study is 0.00 on all datasets, which empirically shows that AdaRound is likely to be the source of the leakage channel.
-    \item The main limitation is that our method only reconstructs samples that look like the mean of the training data. It does not reconstruct individual samples as-is. Furthermore, the SSIM we obtained is rather low and there is much room for further improvement.
+    \item \textbf{Evidence of Leakage:} Even though the SSIM in the main experiment is quite low, we observe empirical evidence of the leakage channel. Furthermore, the SSIM in the ablation study is 0.00 on all datasets, which empirically shows that AdaRound is likely to be the source of the leakage channel.
+    \item \textbf{Main Limitation:} Our method only reconstructs samples that look like the mean of the training data. It does not reconstruct individual samples as-is. 
+    \item Furthermore, the SSIM we obtained is rather low and there is much room for further improvement.
     \item Another limitation is that to perform this attack, the weight perturbation matrix is required. Typically this means needing to obtain both the unquantized and quantized models.
   \end{itemize}
 \end{frame}
@@ -584,10 +592,8 @@ Note that ablating AdaRound means we steer the rounding using only the sign of t
 \section{Conclusion}
 \begin{frame}{Conclusion}
 \begin{itemize}
-  \item We first quantified the compressibility of modern LLMs and confirmed that their capacity is underutilized. 
-  \item We analysed the loss landscape of a language model to show the effects of weight perturbation direction on a model's accuracy.
-  \item We find that AdaRound inadvertently encodes information about its calibration data into its weight perturbation matrix, and verified empirically.
-  \item We challenged an assertion in AdaRound that the gradient of the loss function for pretrained converged models is negligible. However, we obtained neutral to negative results using our proposed method.
+  \item \textbf{AdaRound Inversion:} We found that AdaRound inadvertently encodes information about its calibration data into its weight perturbation matrix. We propose a novel inversion method to reconstruct representations of the calibration data and empirically confirmed the existance of the leakage channel.
+  \item \textbf{Gradient-Aware AdaRound:} We challenged an assertion in AdaRound that the gradient of the loss function for pretrained converged models is negligible. However, we obtained neutral to negative results using our proposed method. An ablation study actually outperformed AdaRound, potentially implying that the gradient for pretrained converged can still be a useful signal.
 \end{itemize}
 \end{frame}
 \begin{frame}{Future Work}
