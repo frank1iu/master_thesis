@@ -377,7 +377,7 @@ Note that the objective can be rewritten as:
 \end{frame}
 \begin{frame}{Experiment Setup}
   \begin{itemize}
-    \item We attempt an inversion on MLPs trained on the Olivetti faces dataset \cite{JMLR:v12:pedregosa11a}, the Weizmann Horse Database\cite{weizmannHorseDB}, and a Chest X-Ray Images dataset\cite{kermanyIdentifyingMedicalDiagnoses2018} using an MLP classifier quantized by AdaRound. Note that this method can also be applied to LLMs, but we are using image models as a proof-of-concept.
+    \item We attempt an inversion on MLPs trained on the Olivetti faces dataset~\cite{JMLR:v12:pedregosa11a}, the Weizmann Horse Database~\cite{weizmannHorseDB}, and a Chest X-Ray Images dataset~\cite{kermanyIdentifyingMedicalDiagnoses2018} using an MLP classifier quantized by AdaRound. Note that this method can also be applied to LLMs, but we are using image models as a proof-of-concept.
     \item For each model, we performed 500 iterations of AdaRound quantization. We then attempted to invert the process by training 10 random Gaussian samples for 3,000 iterations using the Adam optimizer. We report SSIM, PSNR, and Normalized RMSE before and after the inversion.
   \end{itemize}
 \end{frame}
