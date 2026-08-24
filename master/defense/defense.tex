@@ -37,7 +37,7 @@ The recent exponential scaling of Large Language Models (LLMs) has resulted in m
 \tableofcontents
 \end{frame}
 
-\section{Motivation}
+\section{Introduction}
 \begin{frame}{Exponential Scaling of LLMs}
   Recently, the exponential scaling of LLM sizes has inadvertently resulted in models that are extremely challenging to deploy, thus causing users to rely on third-party providers for LLM usage.
 
@@ -243,8 +243,14 @@ We pretrain another model with the same configuration as the base model, and mov
 \end{frame}
 
 \section{Literature Review}
+\begin{frame}{Literature Review: Purpose}
+  \begin{itemize}
+    \item Based on our observation that perturbation direction is an important factor in accuracy, it therefore follows that round-to-nearest, which minimizes $\lVert \Delta W \rVert^2$, does not minimize the accuracy of the quantized model.
+    \item In this section, we review AdaRound~\cite{nagelAdaptiveRoundingPostTraining2020a}, a novel post-training quantization method which proposes a custom rounding function that minimizes the difference in task loss instead of the difference in weights.
+  \end{itemize}
+\end{frame}
 \begin{frame}{AdaRound: Objective}
-AdaRound~\cite{nagelAdaptiveRoundingPostTraining2020a} is a novel rounding method, which aims to minimize the difference in task loss of the quantized model and the unquantized model. The task loss of layer $j$ of the unquantized model is $\mathcal{L}(x, y, w_j)$, and the task loss of the same layer of the quantized model $\mathcal{L}(x, y, w_j + \Delta w_j)$. Therefore, the objective is:
+AdaRound aims to minimize the difference in task loss of the quantized model and the unquantized model. The task loss of layer $j$ of the unquantized model is $\mathcal{L}(x, y, w_j)$, and the task loss of the same layer of the quantized model $\mathcal{L}(x, y, w_j + \Delta w_j)$. Therefore, the objective is:
 \begin{align}
 \underset{\Delta w_j}{\arg\min} \left(\mathcal{L}(x, y, w_j + \Delta w_j) - \mathcal{L}(x, y, w_j)\right).
 \end{align}
