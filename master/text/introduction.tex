@@ -7,7 +7,7 @@
 
 \section{Background}
 
-Recently, the exponential scaling of LLM sizes (as shown in Figure \ref{fig:gerstmayr_llm_scaling}) has inadvertently resulted in models that are extremely challenging to deploy, thus causing users to rely on third-party providers for LLM usage. This resulted in the effects including but not limited to the following.
+Recently, the exponential scaling of LLM sizes (as shown in Figure \ref{fig:gerstmayr_llm_scaling}) has inadvertently resulted in models that are extremely challenging to deploy, thus causing users to rely on third-party providers for LLM usage. This resulted in effects including but not limited to the following.
 
 \begin{figure}[H]
     \centering
@@ -16,7 +16,7 @@ Recently, the exponential scaling of LLM sizes (as shown in Figure \ref{fig:gers
     \label{fig:gerstmayr_llm_scaling}
 \end{figure}
 
-\paragraph{Environmental Effects.} $\text{CO}_2$-equivalent emissions ($\text{CO}_2e$) seems to also grow over time. GPT-3's training had an estimated $\text{CO}_2e$ of $\sim$552.1 tons~\cite{pattersonCarbonEmissionsLarge2021}, GPT-4's training had an estimated $\text{CO}_2e$ of $\sim$6912 tons~\cite{kausarQuantifyingClimateRisk2026}, and Llama 3.3~\cite{grattafioriLlama3Herd2024c}'s training had an estimated $\text{CO}_2e$ of $\sim$11,390 tons. Even worse, it is shown that an LLM incurs ``significantly higher carbon emissions'' during inference than training~\cite{fuLLMCO2AdvancingAccurate2025}.
+\paragraph{Environmental Effects.} $\text{CO}_2$-equivalent emissions ($\text{CO}_2e$) seem to also grow over time. GPT-3's training had an estimated $\text{CO}_2e$ of $\sim$552.1 tons~\cite{pattersonCarbonEmissionsLarge2021}, GPT-4's training had an estimated $\text{CO}_2e$ of $\sim$6912 tons~\cite{kausarQuantifyingClimateRisk2026}, and Llama 3.3~\cite{grattafioriLlama3Herd2024c}'s training had an estimated $\text{CO}_2e$ of $\sim$11,390 tons. Even worse, it is shown that an LLM incurs ``significantly higher carbon emissions'' during inference than training~\cite{fuLLMCO2AdvancingAccurate2025}.
 \paragraph{Cost.} As LLMs scale exponentially, inference costs also become expensive. For example, OpenAI o1~\cite{openaiOpenAIO1System2026} in ``pro mode'' costs \$150 per 1 million tokens input, and \$600 per 1 million tokens output. We see evidence of heavy AI cost burden in companies: Uber's yearly AI budget was exhausted in 4 months, while Microsoft began cancelling Claude Code licenses just 6 months after acquiring them~\cite{jakeUberBurnedIts}.
 \paragraph{Reliability.} Using third-party providers can cause a single point of failure, and an outage can have severe effects on mission-critical tasks. For example, it is observed that whenever ChatGPT has an outage, stock trading volume goes down~\cite{chengDoesGenerativeAI2025}.
 
@@ -27,13 +27,13 @@ Consider a classifier over $k \in \{1, 2, \dots K\}$, trained with Mean Squared 
 \begin{align}
     \mathcal{E}_\text{total} = \mathcal{E}_\text{noise} + \mathcal{E}_\text{bias} + \mathcal{E}_\text{variance}
 \end{align}
-The first term is an intrinstic error term representing irreducible noise, the second term measure the systematic error the model makes, and the third term captures the variance in the model's predictions. As the capacity of a model increases, the bias decreases while the variance increases, leading to a parabolic test error curve~\cite{nealModernTakeBiasVariance2019a}. It is said that:
+The first term is an intrinsic error term representing irreducible noise, the second term measures the systematic error the model makes, and the third term captures the variance in the model's predictions. As the capacity of a model increases, the bias decreases while the variance increases, leading to a parabolic test error curve~\cite{nealModernTakeBiasVariance2019a}. It is said that:
 
 \begin{quote}
     The price to pay for achieving low bias is high variance. --- Geman et. al., 1992~\cite{gemanNeuralNetworksBias1992}
 \end{quote}
 
-This means that if the model's capacity is too small, it may underfit the training data and perform poorly on unseen data. If the model's capacity is too large, it may overfit to spurious patterns in the training data, resulting in low accuracy on unseen data anyways~\cite{belkinReconcilingModernMachine2019}. Textbooks even assert that ``a model with zero training error is overfit to the training data and will typically generalize poorly''~\cite[pg. 221]{hastieElementsStatisticalLearning2009}. It was therefore common to carefully select the complexity of models to achieve the optimal balance between bias and variance.
+This means that if the model's capacity is too small, it may underfit the training data and perform poorly on unseen data. If the model's capacity is too large, it may overfit to spurious patterns in the training data, resulting in low accuracy on unseen data anyway~\cite{belkinReconcilingModernMachine2019}. Textbooks even assert that ``a model with zero training error is overfit to the training data and will typically generalize poorly''~\cite[pg. 221]{hastieElementsStatisticalLearning2009}. It was therefore common to carefully select the complexity of models to achieve the optimal balance between bias and variance.
 
 \begin{figure}[H]
     \centering
@@ -72,30 +72,30 @@ When originally proposed in 2019, this phenomenon was empirically validated on n
 \end{figure}
 
 \section{Purpose}
-Given the recent exponential scaling of LLMs, we observe an important need for efficient language models that can be run on-device, which provides benefits such as the following.
+Given the recent exponential scaling of LLMs, we observe an important need for efficient language models that can be run on-device, which provide benefits such as the following.
 
 \paragraph{Privacy.} Data stays on the device and is not transmitted to a remote server. For regulated areas like medical, legal, or financial data, this can be a requirement.
-\paragraph{Robustness.} Even without Internet connection, on-device models can still function. This is suitable for deployment scenarios with little or no internet access (e.g. robotics or drones in remote environments), and mission-critical cases that need to function even during an internet outage.
+\paragraph{Robustness.} Even without an Internet connection, on-device models can still function. This is suitable for deployment scenarios with little or no Internet access (e.g. robotics or drones in remote environments), and mission-critical cases that need to function even during an Internet outage.
 \paragraph{Reduced Latency.} The queueing rules can be set depending on the deployment scenario, instead of relying on third-party provider scheduling, which allows the prioritization of tasks that require low latency.
 \paragraph{Reduced Cost and Emissions.} Using a third-party provider often requires paying per token, in addition to any network costs. Efficient on-device models can reduce the effective per-token cost and can eliminate network costs. Less emissions can also be expected as a benefit. For example, Dell claims a 87\% cost saving over two years by running agents entirely on-premise~\cite{tanAICostsSpiral}, while Shopify deploys finetuned Qwen and Llama models in their systems~\cite{javierAugmentedCommerceMachine}.
 
 \subsection{Survey of Compression Methods}
 The following methods are typically used for the compression of deep neural networks.
 \paragraph{Weight Pruning.} Model size can be shrunk, and inference can be made compute-efficient, by setting some weights to zeroes, resulting in sparse weight matrices~\cite{wangStructuredPruningLarge2020a}.
-\paragraph{Knowledge Distillation.} It is shown that by making a smaller model learn to match output logits of a larger model (or an ensemble of models), parts of the knowledge in the largest model can be transferred to the smaller model~\cite{hintonDistillingKnowledgeNeural2015c}.
-\paragraph{Weight Palettization.} This method clusters weights (e.g. via $k$-means), then stores every weight as the centroid of the cluster they belong to~\cite{wuDeep$k$MeansReTraining2018a}.
+\paragraph{Knowledge Distillation.} It is shown that by making a smaller model learn to match the output logits of a larger model (or an ensemble of models), parts of the knowledge in the larger model can be transferred to the smaller model~\cite{hintonDistillingKnowledgeNeural2015c}.
+\paragraph{Weight Palettization.} This method clusters weights (e.g. via $k$-means), then stores every weight as the centroid of the cluster it belongs to~\cite{wuDeep$k$MeansReTraining2018a}.
 \paragraph{Weight Quantization.} We focus on this method for our thesis. This method stores weights in a data type of less bit width (e.g. int8), compared to the original data type (e.g. float32)~\cite{jacobQuantizationTrainingNeural2017a}.
 
 \section{Contributions}
 
-Our contributions in this work are twofold: First, we demonstrate a novel inversion method against AdaRound to recover coarse outlines that represent its calibration data, motivating the need to consider privacy in data-dependent quantization method. Second, we propose a gradient-aware adaptive rounding method based on AdaRound, and apply the proposed method on two language models.
+Our contributions in this work are twofold: First, we demonstrate a novel inversion method against AdaRound to recover coarse outlines that represent its calibration data, motivating the need to consider privacy in data-dependent quantization methods. Second, we propose a gradient-aware adaptive rounding method based on AdaRound, and apply the proposed method to two language models.
 
 The rest of this thesis is organized as follows:
 \begin{itemize}
     \item In Chapter \ref{chap:preliminary}, we provide background experiments that show the potential of compression of deep neural networks. We pretrain small language models and use them as a base for exploratory experimentation.
     \item In Chapter \ref{chap:lit_review}, we review AdaRound~\cite{nagelAdaptiveRoundingPostTraining2020a}, an existing method for superior weight rounding during quantization, and discover two limitations of the work: a privacy leakage, and a zero-gradient assertion that is refuted by Central Flows~\cite{cohenUnderstandingOptimizationDeep2025a}, a more recent work.
-    \item In Chapter \ref{chap:adaround_inversion}, we realize an inversion attack against AdaRound, which provide empirical evidence that some information of its calibration data is leaked into the weight perturbation matrix.
-    \item In Chapter \ref{chap:gradient_aware_adaround}, we attempt to reconcile AdaRound's assertion with Central Flows by incorporating gradient signal into AdaRound.
+    \item In Chapter \ref{chap:adaround_inversion}, we realize an inversion attack against AdaRound, which provides empirical evidence that some information of its calibration data is leaked into the weight perturbation matrix.
+    \item In Chapter \ref{chap:gradient_aware_adaround}, we attempt to reconcile AdaRound's assertion with Central Flows by incorporating a gradient signal into AdaRound.
     \item In Chapter \ref{chap:conclusion}, we conclude our findings and list possible future research directions.
 \end{itemize}
 

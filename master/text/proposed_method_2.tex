@@ -13,9 +13,9 @@ In order to minimize
 \begin{align}
     \mathbb{E} \left[ g^{(w)^T} \Delta W \right],
 \end{align}
-we can attempt to force $\Delta W$ to have the same sign as $-g^{(w)^T}$. We approximate this by finetuning a model on a small amount of training data, and compute the Exponential Moving Average (EMA) of the model during each iteration. We then use $\text{sign}(W'_{\text{avg}} - W)$, the sign of the difference between the weights before and after finetuning, as a proxy to $-\text{sign}\left(g^{(w)^T}\right)$. Finally, we add the Binary Cross Entropy (BCE) between the current rounding directions and $\text{sign}(W'_{\text{avg}} - W)$ as a penalty term to AdaRound's optimization objective.
+we can attempt to force $\Delta W$ to have the same sign as $-g^{(w)^T}$. We approximate this by finetuning a model on a small amount of training data, and compute the Exponential Moving Average (EMA) of the model during each iteration. We then use $\text{sign}(W'_{\text{avg}} - W)$, the sign of the difference between the weights before and after finetuning, as a proxy for $-\text{sign}\left(g^{(w)^T}\right)$. Finally, we add the Binary Cross Entropy (BCE) between the current rounding directions and $\text{sign}(W'_{\text{avg}} - W)$ as a penalty term to AdaRound's optimization objective.
 
-In other words, this is essentially a modification to AdaRound's objective in Equation \ref{eq:adaround_objective}. Our version is the following.
+In other words, this is essentially a modification to AdaRound's objective in Equation \ref{eq:adaround_objective}. Our version is as follows.
 
 \begin{align}
 \arg\min_{\mathbf{V}} \left( \|\mathbf{W}x - \hat{\mathbf{W}}x\|_F^2 + f_\text{reg}(\mathbf{V}) + \underbrace{\psi \cdot \textsc{BCE}\left(h(\mathbf{V}_j), \text{sign}(\mathbf{W}' - \mathbf{W})\right)}_{\text{Proposed addition}} \right)
@@ -70,7 +70,7 @@ In other words, this is essentially a modification to AdaRound's objective in Eq
 \end{algorithm}
 
 \section{Evaluation}
-In order to evaluate whether incorporating local gradient information can improve AdaRound quantization, we evaluate our proposed method on our two language models from Section \ref{sec:slms}, and used perplexity as a metric to the models' accuracy.
+In order to evaluate whether incorporating local gradient information can improve AdaRound quantization, we evaluate our proposed method on our two language models from Section \ref{sec:slms}, and use perplexity as a metric for the models' accuracy.
 
 \subsection{Experiment Setup}
 We evaluate the proposed method on the same computing environment as described in Section \ref{sec:adaround_inversion_experiment_setup}. We report implementation details for such as our hyperparameters in Table \ref{tab:implementation_detail_2} (note that they are the same for TinyStories v1 and TinyStories v2). We report the perplexity of our two language models (TinyStories v1 and TinyStories v2) in Table \ref{tab:gradient_aware_adaround_results}. 

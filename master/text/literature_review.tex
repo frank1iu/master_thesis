@@ -31,13 +31,13 @@ $\mathcal{L}$ & A loss function \\
 \subsection{Introduction to AdaRound}
 AdaRound~\cite{nagelAdaptiveRoundingPostTraining2020a} is a novel rounding method, based on the key insight that round-to-nearest is suboptimal for post-training quantization (PTQ).
 
-The authors' proposed method is to instead minimize the difference in task loss of the quantized model and the unquantized model. The task loss of layer $j$ of the unquantized model is $\mathcal{L}(x, y, w_j)$, and the task loss of the same layer of the quantized model $\mathcal{L}(x, y, w_j + \Delta w_j)$. Therefore, the authors' objective is the following.
+The authors' proposed method is to instead minimize the difference between the task losses of the quantized model and the unquantized model. The task loss of layer $j$ of the unquantized model is $\mathcal{L}(x, y, w_j)$, and the task loss of the same layer of the quantized model $\mathcal{L}(x, y, w_j + \Delta w_j)$. Therefore, the authors' objective is the following.
 
 \begin{align}
 \underset{\Delta w_j}{\arg\min} \left(\mathcal{L}(x, y, w_j + \Delta w_j) - \mathcal{L}(x, y, w_j)\right)
 \end{align}
 
-The authors use a second order Taylor expansion to approximate the above objective.
+The authors use a second-order Taylor expansion to approximate the above objective.
 
 \begin{align} \label{eq:adaround_taylor_expansion}
 \mathcal{L}(x, y, w_j + \Delta w_j) - \mathcal{L}(x, y, w_j) \approx \nabla\mathcal{L}(x, y, w_j)^T \Delta w_j + \frac{1}{2} \Delta w_j^T \mathbf{H} \Delta w_j
@@ -49,7 +49,7 @@ Where $\mathbf{H}$ is the Hessian $\nabla^2\mathcal{L}(x, y, w_j)$. The authors 
 \mathcal{L}(x, y, w_j + \Delta w_j) - \mathcal{L}(x, y, w_j) \approx \frac{1}{2} \Delta w_j^T \mathbf{H} \Delta w_j
 \end{align}
 
-Finally, the authors formulate the optimization of weigh rounding for layer $j$ as the following Quadratic Unconstrained Binary Optimization (QUBO) problem.
+Finally, the authors formulate the optimization of weight rounding for layer $j$ as the following Quadratic Unconstrained Binary Optimization (QUBO) problem.
 
 \begin{align}
 \underset{\Delta w_j}{\arg\min} \Delta w_j^T \mathbf{H} \Delta w_j
@@ -125,13 +125,13 @@ We identify two important limitations of AdaRound. First, using calibration data
 
 In this section, we review a rebuttal to the zero-gradient assumption in Equation \ref{eq:adaround_taylor_expansion}. 
 
-Consider gradient descent~\cite{cauchyMethodeGeneralePour1847}, where we compute the gradient of the loss function then try to move the model weights in the opposite direction to minimize the loss.
+Consider gradient descent~\cite{cauchyMethodeGeneralePour1847}, where we compute the gradient of the loss function, then try to move the model weights in the opposite direction to minimize the loss.
 
 \begin{align}
     \theta_{t+1} &= \theta_t - \eta \nabla \mathcal{L}(\theta)
 \end{align}
 
-While one might expect weights to follow a smooth, stable path to an optimum, gradient descent with deep neural networks almost always operate in a highly dynamic, oscillatory regime described as the \textbf{Edge of Stability}~\cite{cohenGradientDescentNeural2022a}, leading to chaotic loss curves such as the follows.
+While one might expect weights to follow a smooth, stable path to an optimum, gradient descent with deep neural networks almost always operates in a highly dynamic, oscillatory regime described as the \textbf{Edge of Stability}~\cite{cohenGradientDescentNeural2022a}, leading to chaotic loss curves such as the following.
 
 \begin{figure}[H]
     \centering
@@ -140,7 +140,7 @@ While one might expect weights to follow a smooth, stable path to an optimum, gr
     \label{fig:kimi_k2_loss_curve}
 \end{figure}
 
-It can be observed that the oscillations in gradient descent can be viewed as bouncing between walls of a valley of low gradient~\cite{xingWalkSGD2018}. \textbf{Central Flows}~\cite{cohenUnderstandingOptimizationDeep2025a} are differential equations that attempts to model the time-averaged trajectory of an oscillatory optimizer, illustrated as follows.
+It can be observed that the oscillations in gradient descent can be viewed as bouncing between walls of a valley of low gradient~\cite{xingWalkSGD2018}. \textbf{Central Flows}~\cite{cohenUnderstandingOptimizationDeep2025a} are differential equations that attempt to model the time-averaged trajectory of an oscillatory optimizer, illustrated as follows.
 
 \begin{figure}[H]
     \centering
@@ -149,7 +149,7 @@ It can be observed that the oscillations in gradient descent can be viewed as bo
     \label{fig:central_flows_valley}
 \end{figure}
 
-The oscillatory optimization also implies that the gradient for pretrained models are rarely zero. The authors empirically show that even as the training loss decreases, the gradient norm of a model almost stays constant, as seen in Figure \ref{fig:central_flows_gradient_norm}.
+The oscillatory optimization also implies that the gradient for pretrained models is rarely zero. The authors empirically show that even as the training loss decreases, the gradient norm of a model almost stays constant, as seen in Figure \ref{fig:central_flows_gradient_norm}.
 
 \begin{figure}[H]
     \centering
@@ -158,6 +158,6 @@ The oscillatory optimization also implies that the gradient for pretrained model
     \label{fig:central_flows_gradient_norm}
 \end{figure}
 
-This observation creates a conflict with AdaRound's assumption in Equation \ref{eq:adaround_taylor_expansion} that the gradient for converged pretrained models is zero, which we attempt to reconciliate in Chapter \ref{chap:gradient_aware_adaround}.
+This observation creates a conflict with AdaRound's assumption in Equation \ref{eq:adaround_taylor_expansion} that the gradient for converged pretrained models is zero, which we attempt to reconcile in Chapter \ref{chap:gradient_aware_adaround}.
 
 \end{document}

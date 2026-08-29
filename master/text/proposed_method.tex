@@ -7,7 +7,7 @@
 In this chapter, we propose and evaluate a novel algorithm to reconstruct representations of training data in AdaRound.
 
 \section{Formulation of Leakage Channel}
-AdaRound's objective function is expected to approach zero after training. Let us define the weight perturbation matrix as $\Delta W = W - \hat{W}$. The objective function can be rewritten as the following.
+AdaRound's objective function is expected to approach zero after training. Let us define the weight perturbation matrix as $\Delta W = W - \hat{W}$. The objective function can be rewritten as follows.
 \begin{align}
 \|Wx - \hat{W}x\|_F^2 = \|\Delta W x\|_F^2
 \end{align}
@@ -36,11 +36,11 @@ An attacker with access to the original weights $W$ and the quantized weights $\
 \end{algorithmic}
 \end{algorithm}
 
-Note that the objective can be rewritten as the following.
+Note that the objective can be rewritten as follows.
 \begin{align}
 \|\Delta W \hat{x}\|_2^2 = (\Delta W \hat{x})^T(\Delta W \hat{x}) = \hat{x}^T (\Delta W^T \Delta W) \hat{x}
 \end{align}
-A simple optimization can therefore be made by computing the Gram matrix $G = \Delta W^T \Delta W$ once, then use it to calculate the objective as $\hat{x}^TG\hat{x}$ in each iteration. (See Algorithm \ref{alg:inversion_optimized})
+A simple optimization can therefore be made by computing the Gram matrix $G = \Delta W^T \Delta W$ once, then using it to calculate the objective as $\hat{x}^TG\hat{x}$ in each iteration. (See Algorithm \ref{alg:inversion_optimized})
 
 \begin{algorithm}[H]
 \caption{Proposed Inversion with Optimization}\label{alg:inversion_optimized}
@@ -60,7 +60,7 @@ A simple optimization can therefore be made by computing the Gram matrix $G = \D
 
 \section{Evaluation} \label{sec:adaround_inversion_experiment_setup}
 \subsection{Experiment Setup}
-We trained MLPs on these datasets: Olivetti Faces~\cite{JMLR:v12:pedregosa11a}, Chest X-Ray Images (Pneumonia)~\cite{kermanyIdentifyingMedicalDiagnoses2018}, and the Weizmann Horse Database~\cite{weizmannHorseDB}, on a single computer (CPU: Intel Xeon w9-3495X, GPU: 1x NVIDIA GeForce RTX 4090). We perform 500 iterations of AdaRound quantization using the Adam optimizer, then obtain $\Delta W$, the difference between the quantized and the original model. For each model, we generate 10 random samples from a Gaussian distribution, then train for 3000 iterations using the Adam optimizer. We report the SSIM (Structural Similarity Index Measure), PSNR (Peak Signal-to-Noise ratio), and Normalized RMSE (Root Mean Squared Error) between the mean of the calibration data and the mean of 10 generated samples before and after our inversion method in Table \ref{tab:adaround_inversion_metrics}. We also report a visualization of the mean calibration sample vs. the mean generated sample in Figures \ref{fig:adaround_inversion_olivetti}, \ref{fig:adaround_inversion_xray}, and \ref{fig:adaround_inversion_horse}.
+We trained MLPs on these datasets: Olivetti Faces~\cite{JMLR:v12:pedregosa11a}, Chest X-Ray Images (Pneumonia)~\cite{kermanyIdentifyingMedicalDiagnoses2018}, and the Weizmann Horse Database~\cite{weizmannHorseDB}, on a single computer (CPU: Intel Xeon w9-3495X, GPU: 1x NVIDIA GeForce RTX 4090). We perform 500 iterations of AdaRound quantization using the Adam optimizer, then obtain $\Delta W$, the difference between the quantized and the original model. For each model, we generate 10 random samples from a Gaussian distribution, then train for 3000 iterations using the Adam optimizer. We report the SSIM (Structural Similarity Index Measure), PSNR (Peak Signal-to-Noise Ratio), and Normalized RMSE (Root Mean Squared Error) between the mean of the calibration data and the mean of the 10 generated samples before and after our inversion method in Table \ref{tab:adaround_inversion_metrics}. We also report a visualization of the mean calibration sample vs. the mean generated sample in Figures \ref{fig:adaround_inversion_olivetti}, \ref{fig:adaround_inversion_xray}, and \ref{fig:adaround_inversion_horse}.
 
 Our implementation details are described in Table \ref{tab:implementation_detail}.
 
@@ -159,7 +159,7 @@ Horse DB (After) & 0.00 & 3.38 (+0.81) & 1.00 (-0.10) \\ \hline
     \label{fig:horse_ablation}
 \end{figure}
 
-We notice 0.00 SSIM on all datasets, implying that the generated samples do not look like the calibration data at all.
+We observe an SSIM of 0.00 on all datasets, implying that the generated samples do not look like the calibration data at all.
 
 \section{Discussion}
 \subsection{Main Experiment}
@@ -169,7 +169,7 @@ From the metrics, we observe an increase in SSIM and PSNR, and a decrease in Nor
 Interestingly, we see a slight improvement in PSNR and NRMSE in the ablation study. However, crucially the SSIM shows that round-to-nearest quantization is not vulnerable to our method. In other words, our method indeed extracts information about the calibration data in data-dependent quantization methods.
 
 \subsection{Overall}
-We demonstrate that AdaRound encodes information from the calibration data into the weight perturbation matrix. By targeting the null space of this matrix, our proposed method generates samples that resembles outlines of the calibration data. While the reconstructed data only represents the mean of the calibration data rather than exact instances, the leakage is significant enough to warrant reconsideration of the security of data-dependent PTQ methods. 
+We demonstrate that AdaRound encodes information from the calibration data into the weight perturbation matrix. By targeting the null space of this matrix, our proposed method generates samples that resemble outlines of the calibration data. While the reconstructed data only represents the mean of the calibration data rather than exact instances, the leakage is significant enough to warrant reconsideration of the security of data-dependent PTQ methods. 
 
 \subsection{Limitations}
 The most important limitation is the fact that this method only reconstructs representations of the mean of the calibration data, but not individual samples. The low SSIM ($\sim0.14$) is another limitation: this method only shows evidence for the leakage channel but the quality may be improved. For future work, it is possible to consider adding Total Variation (TV) loss~\cite{rudinNonlinearTotalVariation1992}, or using a prior such as a deep image prior~\cite{ulyanovDeepImagePrior2020}, to improve the quality of the reconstructed samples.
