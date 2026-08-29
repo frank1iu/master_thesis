@@ -16,21 +16,21 @@ Recently, the exponential scaling of LLM sizes (as shown in Figure \ref{fig:gers
     \label{fig:gerstmayr_llm_scaling}
 \end{figure}
 
-\paragraph{Environmental Effects.} $\text{CO}_2$-equivalent emissions ($\text{CO}_2e$) seem to also grow over time. GPT-3's training had an estimated $\text{CO}_2e$ of $\sim$552.1 tons~\cite{pattersonCarbonEmissionsLarge2021}, GPT-4's training had an estimated $\text{CO}_2e$ of $\sim$6912 tons~\cite{kausarQuantifyingClimateRisk2026}, and Llama 3.3~\cite{grattafioriLlama3Herd2024c}'s training had an estimated $\text{CO}_2e$ of $\sim$11,390 tons. Even worse, it is shown that an LLM incurs ``significantly higher carbon emissions'' during inference than training~\cite{fuLLMCO2AdvancingAccurate2025}.
+\paragraph{Environmental Effects.} $\text{CO}_2$-equivalent emissions ($\text{CO}_2e$) seem to also grow over time. GPT-3's training had an estimated $\text{CO}_2e$ of $\sim$552.1 tons~\cite{pattersonCarbonEmissionsLarge2021}, GPT-4's training had an estimated $\text{CO}_2e$ of $\sim$6,912 tons~\cite{kausarQuantifyingClimateRisk2026}, and Llama 3.3~\cite{grattafioriLlama3Herd2024c}'s training had an estimated $\text{CO}_2e$ of $\sim$11,390 tons. Even worse, it is shown that an LLM incurs ``significantly higher carbon emissions'' during inference than training~\cite{fuLLMCO2AdvancingAccurate2025}.
 \paragraph{Cost.} As LLMs scale exponentially, inference costs also become expensive. For example, OpenAI o1~\cite{openaiOpenAIO1System2026} in ``pro mode'' costs \$150 per 1 million tokens input, and \$600 per 1 million tokens output. We see evidence of heavy AI cost burden in companies: Uber's yearly AI budget was exhausted in 4 months, while Microsoft began cancelling Claude Code licenses just 6 months after acquiring them~\cite{jakeUberBurnedIts}.
 \paragraph{Reliability.} Using third-party providers can cause a single point of failure, and an outage can have severe effects on mission-critical tasks. For example, it is observed that whenever ChatGPT has an outage, stock trading volume goes down~\cite{chengDoesGenerativeAI2025}.
 
 To further understand why simple scaling seems to improve model accuracy with little drawback, let us examine the clash between the classical Bias-Variance Tradeoff and the modern Scaling Laws.
 
 \subsubsection{Classical Perspective}
-Consider a classifier over $k \in \{1, 2, \dots K\}$, trained with Mean Squared Error loss. Its test error is often attributed to the following three sources~\cite{gemanNeuralNetworksBias1992}.
+Consider a classifier over $K$ classes, trained with Mean Squared Error loss. Its test error is often attributed to the following three sources~\cite{gemanNeuralNetworksBias1992}.
 \begin{align}
     \mathcal{E}_\text{total} = \mathcal{E}_\text{noise} + \mathcal{E}_\text{bias} + \mathcal{E}_\text{variance}
 \end{align}
 The first term is an intrinsic error term representing irreducible noise, the second term measures the systematic error the model makes, and the third term captures the variance in the model's predictions. As the capacity of a model increases, the bias decreases while the variance increases, leading to a parabolic test error curve~\cite{nealModernTakeBiasVariance2019a}. It is said that:
 
 \begin{quote}
-    The price to pay for achieving low bias is high variance. --- Geman et. al., 1992~\cite{gemanNeuralNetworksBias1992}
+    The price to pay for achieving low bias is high variance. --- Geman et al., 1992~\cite{gemanNeuralNetworksBias1992}
 \end{quote}
 
 This means that if the model's capacity is too small, it may underfit the training data and perform poorly on unseen data. If the model's capacity is too large, it may overfit to spurious patterns in the training data, resulting in low accuracy on unseen data anyway~\cite{belkinReconcilingModernMachine2019}. Textbooks even assert that ``a model with zero training error is overfit to the training data and will typically generalize poorly''~\cite[pg. 221]{hastieElementsStatisticalLearning2009}. It was therefore common to carefully select the complexity of models to achieve the optimal balance between bias and variance.
@@ -94,7 +94,7 @@ The rest of this thesis is organized as follows:
 \begin{itemize}
     \item In Chapter \ref{chap:preliminary}, we provide background experiments that show the potential of compression of deep neural networks. We pretrain small language models and use them as a base for exploratory experimentation.
     \item In Chapter \ref{chap:lit_review}, we review AdaRound~\cite{nagelAdaptiveRoundingPostTraining2020a}, an existing method for superior weight rounding during quantization, and discover two limitations of the work: a privacy leakage, and a zero-gradient assertion that is refuted by Central Flows~\cite{cohenUnderstandingOptimizationDeep2025a}, a more recent work.
-    \item In Chapter \ref{chap:adaround_inversion}, we realize an inversion attack against AdaRound, which provides empirical evidence that some information of its calibration data is leaked into the weight perturbation matrix.
+    \item In Chapter \ref{chap:adaround_inversion}, we realize an inversion attack against AdaRound, which provides empirical evidence that some information about its calibration data is leaked into the weight perturbation matrix.
     \item In Chapter \ref{chap:gradient_aware_adaround}, we attempt to reconcile AdaRound's assertion with Central Flows by incorporating a gradient signal into AdaRound.
     \item In Chapter \ref{chap:conclusion}, we conclude our findings and list possible future research directions.
 \end{itemize}

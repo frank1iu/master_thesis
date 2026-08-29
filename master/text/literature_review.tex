@@ -31,7 +31,7 @@ $\mathcal{L}$ & A loss function \\
 \subsection{Introduction to AdaRound}
 AdaRound~\cite{nagelAdaptiveRoundingPostTraining2020a} is a novel rounding method, based on the key insight that round-to-nearest is suboptimal for post-training quantization (PTQ).
 
-The authors' proposed method is to instead minimize the difference between the task losses of the quantized model and the unquantized model. The task loss of layer $j$ of the unquantized model is $\mathcal{L}(x, y, w_j)$, and the task loss of the same layer of the quantized model $\mathcal{L}(x, y, w_j + \Delta w_j)$. Therefore, the authors' objective is the following.
+The authors' proposed method is to instead minimize the difference between the task losses of the quantized model and the unquantized model. The task loss of layer $j$ of the unquantized model is $\mathcal{L}(x, y, w_j)$, and the task loss of the same layer of the quantized model is $\mathcal{L}(x, y, w_j + \Delta w_j)$. Therefore, the authors' objective is the following.
 
 \begin{align}
 \underset{\Delta w_j}{\arg\min} \left(\mathcal{L}(x, y, w_j + \Delta w_j) - \mathcal{L}(x, y, w_j)\right)
@@ -69,7 +69,7 @@ The regularizer uses an annealed parameter $\beta$ and is defined as follows.
 f_{\text{reg}}(\mathbf{V}) = \sum_{i, j} 1 - \lvert 2h(\mathbf{V}_{i,j}) - 1\rvert^\beta
 \end{align}
 
-The above objective is then optimized over
+The above objective is then optimized over $\mathbf{V}$ with $\hat{\mathbf{W}}$ defined as follows.
 
 \begin{align}
 \hat{\mathbf{W}} &= \text{scale} \cdot \text{clamp} \left( \lfloor \frac{\mathbf{W}}{\text{scale}} \rfloor +h(\mathbf{V}), q_\text{min}, q_\text{max}\right), \\ 
