@@ -1,3 +1,20 @@
+# Piye Liu - Master Thesis
+* **Thesis:** [hal-lab-u-tokyo/liu_master_thesis](https://github.com/hal-lab-u-tokyo/liu_master_thesis)
+    * Thesis is in master/
+    * Defense slides are in master/defense
+* **Contribution 1 Code and Data** can be found at [hal-lab-u-tokyo/SWoPP2026_ARC](https://github.com/hal-lab-u-tokyo/SWoPP2026_ARC)
+* **Contribution 2 Code and Data** (including models) can be found at [hal-lab-u-tokyo/readings](https://github.com/hal-lab-u-tokyo/readings)
+
+## To-do list
+* [ ] 部屋と机周りの後片付け
+* [ ] 学位論文をはじめとした研究データの共有・整理（進学者も要対応）
+* [ ] ECCSアカウント失効に向けた準備（特に修了者）
+* [ ] 研究室Google Drive, Slack, GitHubの整理
+    * [ ] Google Drive (Data takeout)
+    * [x] Slack
+    * [ ] GitHub (also fork/backup repos)
+* [ ] 今後のメールアドレス連絡先の共有
+
 # TeX執筆tips
 
 ## 執筆(論文，予稿)
