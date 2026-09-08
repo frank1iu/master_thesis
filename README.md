@@ -6,6 +6,8 @@
 * **Contribution 2 Code and Data** (including models) can be found at [hal-lab-u-tokyo/readings](https://github.com/hal-lab-u-tokyo/readings)
 
 ## To-do list
+
+From [here](https://github.com/hal-lab-u-tokyo/Portal/wiki/%E4%BF%AE%E4%BA%86%E3%83%BB%E5%8D%92%E6%A5%AD%E6%99%82%E3%81%AE%E3%81%84%E3%82%8D%E3%81%84%E3%82%8D):
 * [ ] 部屋と机周りの後片付け
 * [ ] 学位論文をはじめとした研究データの共有・整理（進学者も要対応）
 * [ ] ECCSアカウント失効に向けた準備（特に修了者）
@@ -13,7 +15,7 @@
     * [ ] Google Drive (Data takeout)
     * [x] Slack
     * [ ] GitHub (also fork/backup repos)
-* [ ] 今後のメールアドレス連絡先の共有
+* [x] 今後のメールアドレス連絡先の共有
 
 # TeX執筆tips
 
