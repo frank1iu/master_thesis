@@ -11,7 +11,7 @@ From [here](https://github.com/hal-lab-u-tokyo/Portal/wiki/%E4%BF%AE%E4%BA%86%E3
 * [ ] 部屋と机周りの後片付け
 * [ ] 学位論文をはじめとした研究データの共有・整理（進学者も要対応）
     * [x] Upload data to GDrive (see [here](https://drive.google.com/drive/folders/1R3vO8agHL1Wg3NEr7W6a9Xg-Q-dDjWls))
-    * [ ] Clear `.huggingface` `.cache` etc
+    * [x] Clear `.huggingface` `.cache` etc
 * [x] ECCSアカウント失効に向けた準備（特に修了者）
     * [x] Google Takeout
     * [x] Archive files owned by me from shared drive
